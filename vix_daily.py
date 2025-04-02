@@ -45,3 +45,4 @@ print(f"Mode: {mode_vix:.2f} (occurs {mode_count} times)")
 print(f"Std Dev: {std_dev_vix:.2f}")
 print(f"Z-Score: {z_score:.2f}")
 
+print("bye")

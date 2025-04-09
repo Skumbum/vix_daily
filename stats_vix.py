@@ -19,6 +19,9 @@ class VixStats:
         self.std_dev_close = None
         self.z_score_close = None
 
+        self.rolling_mean_7 = None
+        self.rolling_mean_30 = None
+
     def download_data(self):
         try:
             self.data = yf.download(self.ticker, start=self.start, end=self.end, progress=False, auto_adjust=False)
@@ -31,6 +34,9 @@ class VixStats:
                 self.median_close = round(self.data["Close"].median().item(), 2)
                 self.mode_close = round(self.data["Close"]["^VIX"].mode().iloc[0], 2)
                 self.std_dev_close = round(self.data["Close"].std().item(), 2)
+                # Rolling Stats
+                self.rolling_mean_7 = round(self.data[('Close', '^VIX')].rolling(window=7).mean().iloc[-1], 2)
+                self.rolling_mean_30 = round(self.data[('Close', '^VIX')].rolling(window=30).mean().iloc[-1], 2)
 
         except Exception as e:
             print(f"Failed to download data: {e}")
@@ -61,3 +67,11 @@ class VixStats:
     @property
     def get_z_score(self):
         return round(((self.current_vix - self.mean_close) / self.std_dev_close), 2)
+
+    @property
+    def get_rolling_mean7(self):
+        return self.rolling_mean_7
+
+    @property
+    def get_rolling_mean30(self):
+        return self.rolling_mean_30

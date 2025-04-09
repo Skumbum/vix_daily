@@ -10,6 +10,7 @@ def main():
     print(f"Current Vix: {vix_stats.get_current_vix}")
     print(f"Mean: {vix_stats.get_mean}")
     print(f"Median: {vix_stats.get_median}")
+    print(f"Mode: {vix_stats.get_mode}")
     print(f"Std Dev: {vix_stats.get_std_dev}")
     print(f"Z-Score: {vix_stats.get_z_score}")
 

@@ -1,6 +1,7 @@
 #stats_vix.py
 import yfinance as yf
 
+
 class VixStats:
     def __init__(self, start: str = None, end: str = None):
         self.ticker = "^VIX"
@@ -13,6 +14,8 @@ class VixStats:
         self.current_vix = None
         self.mean_close = None
         self.median_close = None
+        self.mode_close = None
+        self.mode_count_close = None
         self.std_dev_close = None
         self.z_score_close = None
 
@@ -26,6 +29,7 @@ class VixStats:
                 self.current_vix = round(self.data["Close"].iloc[-1].item(), 2)
                 self.mean_close = round(self.data["Close"].mean().item(), 2)
                 self.median_close = round(self.data["Close"].median().item(), 2)
+                self.mode_close = round(self.data["Close"]["^VIX"].mode().iloc[0], 2)
                 self.std_dev_close = round(self.data["Close"].std().item(), 2)
 
         except Exception as e:
@@ -46,6 +50,9 @@ class VixStats:
     @property
     def get_median(self):
         return self.median_close
+    @property
+    def get_mode(self):
+        return self.mode_close
 
     @property
     def get_std_dev(self):

@@ -15,6 +15,7 @@ def main():
     print(f"Z-Score: {vix_stats.get_z_score}\n")
     print(f"Rolling 7 Day Mean: {vix_stats.get_rolling_mean7}")
     print(f"Rolling 30 Day Mean: {vix_stats.get_rolling_mean30}")
+    print(f"RSI: {round(vix_stats.get_rsi.iloc[-1], 2)}")
 
 if __name__ == "__main__":
     main()

@@ -1,7 +1,6 @@
 #stats_vix.py
 import yfinance as yf
 
-
 class VixStats:
     def __init__(self, start: str = None, end: str = None):
         self.ticker = "^VIX"
@@ -21,6 +20,7 @@ class VixStats:
 
         self.rolling_mean_7 = None
         self.rolling_mean_30 = None
+        self.rsi = None
 
     def download_data(self):
         try:
@@ -75,3 +75,13 @@ class VixStats:
     @property
     def get_rolling_mean30(self):
         return self.rolling_mean_30
+
+    @property
+    def get_rsi(self):
+        delta = self.data["Close"].diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+        rs = gain / loss
+        rsi_temp = 100 - (100 / (1 + rs))
+        self.rsi = round(rsi_temp.iloc[-1], 2)
+        return self.rsi

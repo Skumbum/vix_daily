@@ -1,5 +1,6 @@
-#yahoo_finance_data_fetcher.py
 import yfinance as yf
+import pandas as pd
+
 
 class YahooFinanceDataFetcher:
     def __init__(self, default_ticker="^VIX"):
@@ -11,15 +12,19 @@ class YahooFinanceDataFetcher:
         If ticker is None, uses default ticker.
         """
         try:
-            # Use provided ticker or fall back to default
             ticker_to_use = ticker if ticker is not None else self.default_ticker
 
-            # Verify we have a ticker to use
             if ticker_to_use is None:
                 raise ValueError("No ticker specified and no default ticker set")
 
             data = yf.download(ticker_to_use, start=start, end=end, progress=False, auto_adjust=False)
+
+            # If the columns are MultiIndex, flatten them
+            if isinstance(data.columns, pd.MultiIndex):
+                data.columns = data.columns.get_level_values(0)
+
             return data
+
         except Exception as e:
             print(f"Failed to download data: {e}")
             return None

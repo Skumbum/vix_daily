@@ -5,10 +5,9 @@ from stats_vix_descriptive import VixStats
 
 def main():
 
-    vix_stats = YahooFinanceDataFetcher()
-    vix_stats.download_data()
-    vix_stats = VixStats()
-    vix_stats.download_data()
+    vix_data = YahooFinanceDataFetcher().download_data()
+    #vix_data.download_data()
+    vix_stats = VixStats(vix_data)
 
     print(f"Row Count: {vix_stats.get_row_count}")
     print(f"Current Vix: {vix_stats.get_current_vix}")
@@ -26,7 +25,7 @@ def main():
 
     print(f"Rolling 7 Day Mean: {vix_stats.get_rolling_mean7}")
     print(f"Rolling 30 Day Mean: {vix_stats.get_rolling_mean30}")
-    print(f"RSI: {round(vix_stats.get_rsi.iloc[-1], 2)}")
+    print(f"RSI: {vix_stats.get_rsi}")
 
 if __name__ == "__main__":
     main()

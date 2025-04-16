@@ -1,4 +1,4 @@
-#stats_vix.py
+#stats_vix_descriptive.py
 import yfinance as yf
 
 class VixStats:
@@ -18,6 +18,12 @@ class VixStats:
         self.std_dev_close = None
         self.z_score_close = None
 
+        self.percentile_25 = None
+        self.percentile_50 = None  # This is the same as median
+        self.percentile_75 = None
+        self.percentile_90 = None
+        self.percentile_95 = None
+
         self.rolling_mean_7 = None
         self.rolling_mean_30 = None
         self.rsi = None
@@ -34,6 +40,13 @@ class VixStats:
                 self.median_close = round(self.data["Close"].median().item(), 2)
                 self.mode_close = round(self.data["Close"]["^VIX"].mode().iloc[0], 2)
                 self.std_dev_close = round(self.data["Close"].std().item(), 2)
+
+                self.percentile_25 = round(self.data[('Close', '^VIX')].quantile(0.25), 2)
+                self.percentile_50 = round(self.data[('Close', '^VIX')].quantile(0.50), 2)  # Same as median
+                self.percentile_75 = round(self.data[('Close', '^VIX')].quantile(0.75), 2)
+                self.percentile_90 = round(self.data[('Close', '^VIX')].quantile(0.90), 2)
+                self.percentile_95 = round(self.data[('Close', '^VIX')].quantile(0.95), 2)
+
                 # Rolling Stats
                 self.rolling_mean_7 = round(self.data[('Close', '^VIX')].rolling(window=7).mean().iloc[-1], 2)
                 self.rolling_mean_30 = round(self.data[('Close', '^VIX')].rolling(window=30).mean().iloc[-1], 2)
@@ -67,6 +80,31 @@ class VixStats:
     @property
     def get_z_score(self):
         return round(((self.current_vix - self.mean_close) / self.std_dev_close), 2)
+
+    @property
+    def get_percentile_25(self):
+        return self.percentile_25
+
+    @property
+    def get_percentile_75(self):
+        return self.percentile_75
+
+    @property
+    def get_percentile_90(self):
+        return self.percentile_90
+
+    @property
+    def get_percentile_95(self):
+        return self.percentile_95
+
+    @property
+    def current_percentile(self):
+        """Returns the percentile of the current VIX value in the historical distribution"""
+        if self.data is not None and not self.data.empty:
+            # Calculate what percentage of values are below the current VIX
+            percentile = (self.data[('Close', '^VIX')] < self.current_vix).mean() * 100
+            return round(percentile, 1)
+        return None
 
     @property
     def get_rolling_mean7(self):

@@ -74,7 +74,19 @@ The **StatsDescriptive** class provides statistical analysis for a given dataset
    - **Description:** The range between the 25th and 75th percentiles, representing the spread of the middle 50% of the data.
    - **Usage:** `get_iqr`
 
-### 17. **Percentiles**
+### 17. **Range**
+   - **Description:** The difference between the maximum and minimum values in the dataset.
+   - **Usage:** `get_range`
+
+### 18. **Coefficient of Variation (CV)**
+   - **Description:** The ratio of the standard deviation to the mean, representing the relative variability of the data.
+   - **Usage:** `get_cv`
+
+### 19. **Current Percentile**
+   - **Description:** The percentile rank of the current value within the dataset.
+   - **Usage:** `current_percentile`
+
+### 20. **Percentiles**
    - **Description:** 
      - 25th Percentile: The value below which 25% of the data lies.
      - 50th Percentile: The median value.
@@ -88,7 +100,7 @@ The **StatsDescriptive** class provides statistical analysis for a given dataset
      - `get_percentile_90`
      - `get_percentile_95`
 
-### 18. **Rolling Means**
+### 21. **Rolling Means**
    - **Description:** 
      - 7-Day Rolling Mean: The moving average over a 7-day window.
      - 30-Day Rolling Mean: The moving average over a 30-day window.
@@ -96,15 +108,15 @@ The **StatsDescriptive** class provides statistical analysis for a given dataset
      - `get_rolling_mean7`
      - `get_rolling_mean30`
 
-### 19. **Volatility**
+### 22. **Volatility**
    - **Description:** The variability in the data over a defined window, typically a 30-day window.
    - **Usage:** `get_30_day_volatility`
 
-### 20. **Stability Score**
+### 23. **Stability Score**
    - **Description:** A measure of market stability, calculated based on volatility and standard deviation.
    - **Usage:** `get_stability_score`
 
-### 21. **RSI (Relative Strength Index)**
+### 24. **RSI (Relative Strength Index)**
    - **Description:** A momentum oscillator used to identify overbought or oversold conditions in the data.
    - **Usage:** `get_rsi`
 
@@ -113,8 +125,14 @@ The **StatsDescriptive** class provides statistical analysis for a given dataset
 ### `update_stats`
    - **Description:** This method computes the descriptive statistics based on the input dataset and updates the class attributes with the results.
 
-### `ta_calculate_rsi`
-   - **Description:** A helper function that calculates the 14-day Relative Strength Index (RSI) for the dataset.
+### `calculate_mad`
+   - **Description:** A helper function that calculates the Mean Absolute Deviation for the dataset.
+
+### `calculate_geometric_mean`
+   - **Description:** A helper function that calculates the geometric mean for the dataset, filtering out non-positive values.
+
+### `calculate_harmonic_mean`
+   - **Description:** A helper function that calculates the harmonic mean for the dataset, using only positive values.
 
 ## Example Usage
 
@@ -129,3 +147,4 @@ print(f"Current: {stats.get_current}")
 print(f"Mean: {stats.get_mean}")
 print(f"Median: {stats.get_median}")
 print(f"Mode: {stats.get_mode}")
+```

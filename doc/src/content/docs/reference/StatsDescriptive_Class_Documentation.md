@@ -1,3 +1,6 @@
+---
+title: StatsDescriptive Class Documentation
+---
 
 # StatsDescriptive Class Documentation
 
@@ -126,4 +129,3 @@ print(f"Current: {stats.get_current}")
 print(f"Mean: {stats.get_mean}")
 print(f"Median: {stats.get_median}")
 print(f"Mode: {stats.get_mode}")
-```

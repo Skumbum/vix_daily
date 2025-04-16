@@ -5,8 +5,8 @@ from stats_vix_descriptive import VixStats
 
 def main():
 
-    VixData = YahooFinanceDataFetcher()
-    VixData.download_data()
+    vix_stats = YahooFinanceDataFetcher()
+    vix_stats.download_data()
     vix_stats = VixStats()
     vix_stats.download_data()
 

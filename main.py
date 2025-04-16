@@ -1,42 +1,60 @@
-#main.py
-
 from yahoo_finance_data_fetcher import YahooFinanceDataFetcher
-from stats_vix_descriptive import StatsDescriptive
+from stats_descriptive import StatsDescriptive
+
 
 def main():
     vix_data = YahooFinanceDataFetcher().download_data()
     vix_stats = StatsDescriptive(vix_data)
 
+    # Print basic statistics with a header
+    print("\n" + "=" * 50)
+    print("BASIC STATISTICS")
+    print("=" * 50)
     print(f"Row Count: {vix_stats.get_row_count}")
-    print(f"Current Vix: {vix_stats.get_current}")
-    print(f"Mean: {vix_stats.get_mean}")
-    print(f"Median: {vix_stats.get_median}")
-    print(f"Mode: {vix_stats.get_mode}")
-    print(f"Min: {vix_stats.get_min}")
-    print(f"Max: {vix_stats.get_max}")
-    print(f"Std Dev: {vix_stats.get_std_dev}")
-    print(f"Variance: {vix_stats.get_variance}")
-    print(f"MAD (Mean Absolute Deviation): {vix_stats.get_mad}")
-    print(f"Z-Score: {vix_stats.get_z_score}\n")
+    print(f"Current: {vix_stats.get_current:.2f}")
+    print(f"Mean: {vix_stats.get_mean:.2f}")
+    print(f"Median: {vix_stats.get_median:.2f}")
+    print(f"Mode: {vix_stats.get_mode:.2f}")
+    print(f"Min: {vix_stats.get_min:.2f}")
+    print(f"Max: {vix_stats.get_max:.2f}")
+    print(f"Range: {vix_stats.get_range:.2f}")
+    print(f"Standard Deviation: {vix_stats.get_std_dev:.2f}")
+    print(f"Variance: {vix_stats.get_variance:.2f}")
 
-    print(f"Geometric Mean: {vix_stats.get_geom_mean}")
-    print(f"Harmonic Mean: {vix_stats.get_harm_mean}")
-    print(f"Skewness: {vix_stats.get_skewness}")
-    print(f"Kurtosis: {vix_stats.get_kurtosis}")
-    print(f"IQR (Interquartile Range): {vix_stats.get_iqr}\n")
+    # Print percentiles with a header
+    print("\n" + "=" * 50)
+    print("PERCENTILE STATISTICS")
+    print("=" * 50)
+    print(f"Current Percentile: {vix_stats.current_percentile:.2f}")
+    print(f"Percentile 25: {vix_stats.get_percentile_25:.2f}")
+    print(f"Percentile 50: {vix_stats.get_percentile_50:.2f}")
+    print(f"Percentile 75: {vix_stats.get_percentile_75:.2f}")
+    print(f"Percentile 90: {vix_stats.get_percentile_90:.2f}")
+    print(f"Percentile 95: {vix_stats.get_percentile_95:.2f}")
+    print(f"IQR: {vix_stats.get_iqr:.2f}")
 
-    print(f"Current Percentile: {vix_stats.current_percentile}")
-    print(f"Percentile 25: {vix_stats.get_percentile_25}")
-    print(f"Percentile 50: {vix_stats.get_percentile_50}")
-    print(f"Percentile 75: {vix_stats.get_percentile_75}")
-    print(f"Percentile 90: {vix_stats.get_percentile_90}")
-    print(f"Percentile 95: {vix_stats.get_percentile_95}\n")
+    # Print advanced statistics with a header
+    print("\n" + "=" * 50)
+    print("ADVANCED STATISTICS")
+    print("=" * 50)
+    print(f"MAD: {vix_stats.get_mad:.2f}")
+    print(f"Z-Score: {vix_stats.get_z_score:.2f}")
+    print(f"Geometric Mean: {vix_stats.get_geometric_mean:.2f}")
+    print(f"Harmonic Mean: {vix_stats.get_harmonic_mean:.2f}")
+    print(f"Skewness: {vix_stats.get_skewness:.2f}")
+    print(f"Kurtosis: {vix_stats.get_kurtosis:.2f}")
+    print(f"Coefficient of Variation (CV): {vix_stats.get_cv:.2f}")
 
-    print(f"Rolling 7 Day Mean: {vix_stats.get_rolling_mean7}")
-    print(f"Rolling 30 Day Mean: {vix_stats.get_rolling_mean30}")
-    print(f"30-Day Volatility: {vix_stats.get_volatility_30d}")
-    print(f"Stability Score: {vix_stats.get_stability_score}")
-    print(f"RSI: {vix_stats.get_ta_rsi}")
+    # Print time-series related statistics with a header
+    print("\n" + "=" * 50)
+    print("TIME-SERIES STATISTICS")
+    print("=" * 50)
+    print(f"Rolling 7 Day Mean: {vix_stats.get_rolling_mean7:.2f}")
+    print(f"Rolling 30 Day Mean: {vix_stats.get_rolling_mean30:.2f}")
+    print(f"30-Day Volatility: {vix_stats.get_30_day_volatility:.2f}")
+    print(f"Stability Score: {vix_stats.get_stability_score:.2f}")
+    print(f"RSI: {vix_stats.get_rsi:.2f}")
+
 
 if __name__ == "__main__":
     main()

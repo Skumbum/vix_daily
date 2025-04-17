@@ -1,6 +1,6 @@
 from yahoo_finance_data_fetcher import YahooFinanceDataFetcher
 from stats_descriptive import StatsDescriptive
-
+from log_normal_analyser import LogNormalAnalyser
 
 def main():
     vix_data = YahooFinanceDataFetcher().download_data()
@@ -53,7 +53,14 @@ def main():
     print(f"Rolling 30 Day Mean: {vix_stats.get_rolling_mean30:.2f}")
     print(f"30-Day Volatility: {vix_stats.get_30_day_volatility:.2f}")
     print(f"Stability Score: {vix_stats.get_stability_score:.2f}")
-    print(f"RSI: {vix_stats.get_rsi:.2f}")
+    print(f"RSI: {vix_stats.get_rsi:.2f}\n")
+
+
+    fetcher = YahooFinanceDataFetcher()
+    df = fetcher.download_data()
+    analyser = LogNormalAnalyser(df, column="Close")
+    print(analyser.get_statistics())
+    print(analyser.get_extended_statistics())
 
 
 if __name__ == "__main__":

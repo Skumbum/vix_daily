@@ -46,10 +46,8 @@ class StatsDescriptive:
     def calculate_geometric_mean(self, data):
         # Filter out non-positive values to avoid errors with logarithms
         positive_data = data[data > 0]
-
         if len(positive_data) == 0:
             return None
-
         # Use logarithms to avoid overflow
         log_data = np.log(positive_data)
         return np.exp(np.mean(log_data))
@@ -136,8 +134,9 @@ class StatsDescriptive:
 
     @property
     def current_percentile(self):
+        """Calculate the percentile rank of the current value within the dataset."""
         current_value = self.series.iloc[-1]  # Get the most recent data point
-        return np.percentile(self.series, (current_value / self.max) * 100) if self.max != 0 else None
+        return (self.series.rank(pct=True).iloc[-1]) * 100
 
     @property
     def get_percentile_25(self):
@@ -180,7 +179,6 @@ class StatsDescriptive:
         delta = self.series.diff()
         gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
         loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-
         rs = gain / loss
         rsi_series = 100 - (100 / (1 + rs))
         return rsi_series.iloc[-1]

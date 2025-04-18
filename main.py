@@ -1,7 +1,7 @@
 from yahoo_finance_data_fetcher import YahooFinanceDataFetcher
 from empirical_stats_descriptive import EmpiricalStatsDescriptive
 from log_normal_analyser import LogNormalAnalyser
-from kde_analyzer import VIXKDEAnalyzer
+from kde_analyzer import KDEAnalyzer
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -9,7 +9,8 @@ import pandas as pd
 
 def main():
     # Fetch VIX data
-    vix_data = YahooFinanceDataFetcher().download_data("^VIX", start="2024-01-01")
+    #vix_data = YahooFinanceDataFetcher().download_data("^VIX", start="2024-01-01")
+    vix_data = YahooFinanceDataFetcher().download_data()
     vix_stats = EmpiricalStatsDescriptive(vix_data)
 
     # Print basic statistics with a header
@@ -70,7 +71,7 @@ def main():
     print(vix_analyser.get_extended_statistics())
 
 
-    kde_analyzer = VIXKDEAnalyzer(vix_data, column="Close")
+    kde_analyzer = KDEAnalyzer(vix_data, column="Close")
     lognorm_analyzer = LogNormalAnalyser(vix_data, column="Close")
 
     # KDE Analysis
@@ -79,7 +80,6 @@ def main():
     print("=" * 50)
     print(kde_analyzer.get_statistics())
     print(kde_analyzer.get_extended_statistics())
-
 
 
 if __name__ == "__main__":

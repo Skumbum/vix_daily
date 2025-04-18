@@ -46,6 +46,8 @@ Kurtosis: {kurtosis:.4f}
 """
         return stats_text.strip()
 
+
+
     def get_probability_interval(self, lower_bound, upper_bound):
         """Calculate probability that value falls within [lower_bound, upper_bound]"""
         if lower_bound <= 0 or upper_bound <= 0:
@@ -242,5 +244,7 @@ Volatility of Volatility: {vol_of_vol:.4f}
 """
         if half_life is not None:
             stats_text += f"Estimated Half-Life to Median: {half_life:.2f} days\n"
+
+
 
         return stats_text.strip()

@@ -5,24 +5,24 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import KernelDensity
 
 
-class VIXKDEAnalyzer:
+class KDEAnalyzer:
     """
-    A class for analyzing VIX data using Kernel Density Estimation techniques.
+    A class for analyzing time series data using Kernel Density Estimation techniques.
 
-    This class provides tools for loading VIX data from a DataFrame, performing KDE analysis,
+    This class provides tools for loading time series data from a DataFrame, performing KDE analysis,
     and generating statistical reports.
     """
 
     def __init__(self, data: pd.DataFrame, column: str = "Close", kernel: str = 'gaussian'):
         """
-        Initialize the VIX KDE Analyzer.
+        Initialize the KDE Analyzer.
 
         Parameters:
         -----------
         data : pd.DataFrame
-            DataFrame containing VIX time series data.
+            DataFrame containing time series data.
         column : str
-            Column name containing VIX values (default: 'Close').
+            Column name containing values (default: 'Close').
         kernel : str
             Kernel type to use for KDE (default: 'gaussian').
         """
@@ -33,8 +33,11 @@ class VIXKDEAnalyzer:
         self.kernel = kernel
         self.bandwidth = None
         self.kde_model = None
-        self.current_vix = self.data[column].iloc[-1]  # Most recent value
+        self.current = self.data[column].iloc[-1]  # Most recent value
         self.fit()
+
+
+
 
     def optimize_bandwidth(self, bandwidth_range=None):
         """
@@ -62,7 +65,7 @@ class VIXKDEAnalyzer:
 
     def fit(self):
         """
-        Fit the KDE model to the VIX data.
+        Fit the KDE model to the data.
         """
         data_array = self.data[self.column].values.reshape(-1, 1)
         if self.bandwidth is None:
@@ -79,7 +82,7 @@ class VIXKDEAnalyzer:
         Parameters:
         -----------
         x_range : tuple or None
-            Range of VIX values to estimate (min, max)
+            Range of values to estimate (min, max)
         points : int
             Number of points to evaluate
 
@@ -105,12 +108,12 @@ class VIXKDEAnalyzer:
 
     def calculate_percentile(self, value):
         """
-        Calculate the percentile of a given VIX value.
+        Calculate the percentile of a given value.
 
         Parameters:
         -----------
         value : float
-            VIX value
+             value
 
         Returns:
         --------
@@ -121,14 +124,14 @@ class VIXKDEAnalyzer:
 
     def calculate_probability(self, lower_bound, upper_bound=None, points=1000):
         """
-        Calculate probability of VIX being in a specified range.
+        Calculate probability of data being in a specified range.
 
         Parameters:
         -----------
         lower_bound : float
             Lower bound of range
         upper_bound : float or None
-            Upper bound of range. If None, calculates P(VIX >= lower_bound)
+            Upper bound of range. If None, calculates P(data >= lower_bound)
         points : int
             Number of integration points
 
@@ -159,7 +162,7 @@ class VIXKDEAnalyzer:
         Parameters:
         -----------
         threshold : float
-            VIX threshold value
+            data threshold value
 
         Returns:
         --------
@@ -174,7 +177,7 @@ class VIXKDEAnalyzer:
 
     def estimate_conditional_expectation(self, threshold, upper_limit=None, points=1000):
         """
-        Calculate E[VIX | VIX > threshold].
+        Calculate E[data | data > threshold].
 
         Parameters:
         -----------
@@ -252,7 +255,7 @@ Bandwidth: {self.bandwidth:.4f}
         str:
             Formatted string containing extended statistics
         """
-        current_value = self.current_vix
+        current_value = self.current
         current_percentile = self.calculate_percentile(current_value)
 
         # Calculate probability intervals
@@ -296,8 +299,8 @@ Return Periods (Days):
 - Exceeding 50: {return_period_50:.2f}
 
 Expected Values:
-- E[VIX | VIX > 30]: {expected_above_30:.2f}
-- E[VIX | VIX > 40]: {expected_above_40:.2f}
+- E[Data | Data > 30]: {expected_above_30:.2f}
+- E[Data | Data > 40]: {expected_above_40:.2f}
 
 Key Quantiles:
 - 1%: {q1:.2f}
@@ -305,4 +308,7 @@ Key Quantiles:
 - 95%: {q95:.2f}
 - 99%: {q99:.2f}
 """
+
+
+
         return stats_text.strip()

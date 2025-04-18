@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 
-class StatsDescriptive:
+class EmpiricalStatsDescriptive:
     def __init__(self, data):
         self.data = data
         # For simplicity, we'll use the 'Close' column for calculations if it exists

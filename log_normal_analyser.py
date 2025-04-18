@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import scipy.stats as stats
 from scipy.special import ndtr
+from scipy.stats import linregress
 
 
 class LogNormalAnalyser:
@@ -113,29 +114,50 @@ Kurtosis: {kurtosis:.4f}
 
         return stats.lognorm.ppf(p, self.shape, scale=self.scale)
 
-    def get_half_life(self, start_value, target_value=None):
+    def get_half_life(self, start_value, target_value=None, lookback=252):
         """
-        Estimate half-life for mean reversion from start_value to target_value
-        If target_value is None, median is used
+        Robust half-life estimation with error handling
+        Parameters:
+        - start_value: Current value to measure reversion from
+        - target_value: Reversion target (defaults to median)
+        - lookback: Days of history to consider (default 1 year)
         """
         if start_value <= 0:
-            raise ValueError("Start value must be positive for log-normal distribution")
+            return float('nan')
 
-        if target_value is None:
-            target_value = self.scale  # Use median as target
+        try:
+            if target_value is None:
+                target_value = self.scale  # Log-normal median
 
-        # This is simplified and assumes mean reversion behavior
-        # For VIX, this could be interpreted as time to revert halfway to normal levels
-        log_start = np.log(start_value)
-        log_target = np.log(target_value)
-        log_diff = abs(log_start - log_target)
+            # Use most recent data
+            recent_data = self.data[self.column].tail(lookback)
+            log_data = np.log(recent_data)
 
-        # Using a simple exponential decay model
-        # Typical decay rate for VIX based on empirical observation
-        # This is an approximation - actual half-life would need time series analysis
-        decay_rate = 0.1  # This should be calibrated to your data
+            # Calculate daily log returns
+            log_returns = log_data.diff().dropna()
+            log_prices = log_data.shift(1).dropna()
 
-        return np.log(2) / decay_rate
+            # Align the data
+            common_index = log_returns.index.intersection(log_prices.index)
+            log_returns = log_returns.loc[common_index]
+            log_prices = log_prices.loc[common_index]
+
+            # Perform linear regression: Δln(X) = α + β*ln(X_{t-1}) + ε
+            slope, intercept, _, _, _ = linregress(log_prices, log_returns)
+
+            # Calculate mean reversion parameters
+            if slope >= 0:  # Non-mean-reverting case
+                print("Warning: Non-mean-reverting behavior detected (slope >= 0)")
+                return float('inf')
+
+            theta = -slope
+            half_life_days = np.log(2) / theta
+
+            return half_life_days
+
+        except Exception as e:
+            print(f"Error calculating half-life: {e}")
+            return float('nan')
 
     def get_volatility_of_volatility(self):
         """Calculate the volatility of volatility"""

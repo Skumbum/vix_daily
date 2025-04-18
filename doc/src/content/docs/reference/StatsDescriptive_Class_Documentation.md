@@ -137,7 +137,7 @@ The **StatsDescriptive** class provides statistical analysis for a given dataset
 ## Example Usage
 
 ```python
-from stats_descriptive import StatsDescriptive
+from empirical_financial_stats import StatsDescriptive
 
 data = [25, 30, 35, 40, 45, 50]  # Sample data
 stats = StatsDescriptive(data)

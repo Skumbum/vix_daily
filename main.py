@@ -2,6 +2,7 @@ from yahoo_finance_data_fetcher import YahooFinanceDataFetcher
 from empirical_stats_descriptive import EmpiricalStatsDescriptive
 from log_normal_analyser import LogNormalAnalyser
 from kde_analyzer import KDEAnalyzer
+from mean_reversion_analyser import MeanReversionAnalyser
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -80,6 +81,36 @@ def main():
     print("=" * 50)
     print(kde_analyzer.get_statistics())
     print(kde_analyzer.get_extended_statistics())
+
+
+    kde_analyzer.plot_kde_with_histogram()
+    kde_analyzer.plot_boxplot_with_mean_iqr()
+    #kde_analyzer.save_kde_plot1("kde_plot1.png")
+
+    # Create both analyzers
+    mr_analyzer = MeanReversionAnalyser(vix_data["Close"].values, mean=kde_analyzer.data[kde_analyzer.column].mean())
+
+    # Get distribution insights from KDE
+    kde_stats = kde_analyzer.get_statistics()
+    kde_extended = kde_analyzer.get_extended_statistics()
+
+    # Get time-based insights from mean reversion
+    mr_params = mr_analyzer.estimate_ar_parameters()
+    mr_summary = mr_analyzer.summary()
+
+    # Cross-validate the results
+    expected_time_to_mean = mr_analyzer.estimate_time_to_mean()
+    return_periods = {
+        "30": kde_analyzer.estimate_expected_return_period(30),
+        "40": kde_analyzer.estimate_expected_return_period(40),
+        "mean": 1 / kde_analyzer.calculate_probability(mr_analyzer.mean * 0.99, mr_analyzer.mean * 1.01)
+    }
+
+    # Compare the approaches
+    print(f"\nKDE return period to mean: {return_periods['mean']:.2f} days")
+    print(f"Mean reversion time estimate: {expected_time_to_mean:.2f} days\n")
+
+    print(mr_analyzer.summary())
 
 
 if __name__ == "__main__":

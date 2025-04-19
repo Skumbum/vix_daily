@@ -1,31 +1,13 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from scipy import stats
 from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import KernelDensity
 
 
 class KDEAnalyzer:
-    """
-    A class for analyzing time series data using Kernel Density Estimation techniques.
-
-    This class provides tools for loading time series data from a DataFrame, performing KDE analysis,
-    and generating statistical reports.
-    """
-
     def __init__(self, data: pd.DataFrame, column: str = "Close", kernel: str = 'gaussian'):
-        """
-        Initialize the KDE Analyzer.
-
-        Parameters:
-        -----------
-        data : pd.DataFrame
-            DataFrame containing time series data.
-        column : str
-            Column name containing values (default: 'Close').
-        kernel : str
-            Kernel type to use for KDE (default: 'gaussian').
-        """
         if column not in data.columns:
             raise ValueError(f"Column '{column}' not found in data")
         self.data = data[[column]].dropna()
@@ -36,19 +18,12 @@ class KDEAnalyzer:
         self.current = self.data[column].iloc[-1]  # Most recent value
         self.fit()
 
-
-
-
     def optimize_bandwidth(self, bandwidth_range=None):
-        """
-        Find the optimal bandwidth using cross-validation.
-        """
         data_array = self.data[self.column].values.reshape(-1, 1)
         if bandwidth_range is None:
             std = np.std(data_array)
             bandwidth_range = np.linspace(0.1 * std, 2 * std, 30)
 
-        # Create a custom scorer for KDE
         def kde_scorer(estimator, X):
             return np.mean(estimator.score_samples(X))
 
@@ -56,7 +31,7 @@ class KDEAnalyzer:
             KernelDensity(kernel=self.kernel),
             {'bandwidth': bandwidth_range},
             cv=5,
-            scoring=kde_scorer  # Use our custom scorer
+            scoring=kde_scorer
         )
 
         grid.fit(data_array)
@@ -64,9 +39,6 @@ class KDEAnalyzer:
         return self.bandwidth
 
     def fit(self):
-        """
-        Fit the KDE model to the data.
-        """
         data_array = self.data[self.column].values.reshape(-1, 1)
         if self.bandwidth is None:
             self.optimize_bandwidth()
@@ -76,21 +48,6 @@ class KDEAnalyzer:
         return self
 
     def estimate_pdf(self, x_range=None, points=1000):
-        """
-        Estimate the probability density function over a range.
-
-        Parameters:
-        -----------
-        x_range : tuple or None
-            Range of values to estimate (min, max)
-        points : int
-            Number of points to evaluate
-
-        Returns:
-        --------
-        tuple:
-            (x_values, pdf_values)
-        """
         if self.kde_model is None:
             raise ValueError("KDE model not fitted. Call fit() first.")
 
@@ -107,39 +64,9 @@ class KDEAnalyzer:
         return x.flatten(), pdf
 
     def calculate_percentile(self, value):
-        """
-        Calculate the percentile of a given value.
-
-        Parameters:
-        -----------
-        value : float
-             value
-
-        Returns:
-        --------
-        float:
-            Percentile (0-100)
-        """
         return stats.percentileofscore(self.data[self.column], value)
 
     def calculate_probability(self, lower_bound, upper_bound=None, points=1000):
-        """
-        Calculate probability of data being in a specified range.
-
-        Parameters:
-        -----------
-        lower_bound : float
-            Lower bound of range
-        upper_bound : float or None
-            Upper bound of range. If None, calculates P(data >= lower_bound)
-        points : int
-            Number of integration points
-
-        Returns:
-        --------
-        float:
-            Probability estimate
-        """
         if self.kde_model is None:
             raise ValueError("KDE model not fitted. Call fit() first.")
 
@@ -156,43 +83,10 @@ class KDEAnalyzer:
         return probability
 
     def estimate_expected_return_period(self, threshold):
-        """
-        Estimate the expected return period (in days) for exceeding a threshold.
-
-        Parameters:
-        -----------
-        threshold : float
-            data threshold value
-
-        Returns:
-        --------
-        float:
-            Expected return period in days
-        """
         prob = self.calculate_probability(threshold, None)
-        if prob > 0:
-            return 1.0 / prob
-        else:
-            return float('inf')
+        return 1.0 / prob if prob > 0 else float('inf')
 
     def estimate_conditional_expectation(self, threshold, upper_limit=None, points=1000):
-        """
-        Calculate E[data | data > threshold].
-
-        Parameters:
-        -----------
-        threshold : float
-            Threshold value
-        upper_limit : float or None
-            Upper integration limit. If None, uses max + 3*std
-        points : int
-            Number of integration points
-
-        Returns:
-        --------
-        float:
-            Conditional expectation
-        """
         if self.kde_model is None:
             raise ValueError("KDE model not fitted. Call fit() first.")
 
@@ -208,72 +102,63 @@ class KDEAnalyzer:
         numerator = np.sum(x.flatten() * dens) * dx
         denominator = np.sum(dens) * dx
 
-        if denominator > 0:
-            return numerator / denominator
-        else:
-            return float('inf')
+        return numerator / denominator if denominator > 0 else float('inf')
 
     def get_statistics(self):
-        """
-        Return core KDE statistics as text.
-
-        Returns:
-        --------
-        str:
-            Formatted string containing core statistics
-        """
         data_array = self.data[self.column].values
         mean = np.mean(data_array)
         median = np.median(data_array)
-        mode = data_array[np.argmax(np.exp(self.kde_model.score_samples(data_array.reshape(-1, 1))))]
+        x_pdf, y_pdf = self.estimate_pdf()
+        mode = x_pdf[np.argmax(y_pdf)]
         variance = np.var(data_array)
         skewness = stats.skew(data_array)
         kurtosis = stats.kurtosis(data_array)
+        min_val = np.min(data_array)
+        max_val = np.max(data_array)
+
+        q25 = np.percentile(data_array, 25)
+        q75 = np.percentile(data_array, 75)
+        iqr = q75 - q25
 
         stats_text = f"""
-==================================================
-KDE STATISTICS for column: {self.column}
-==================================================
-Count: {len(data_array)}
-Mean: {mean:.4f}
-Median: {median:.4f}
-Mode: {mode:.4f}
-Variance: {variance:.4f}
-Skewness: {skewness:.4f}
-Kurtosis: {kurtosis:.4f}
-Kernel: {self.kernel}
-Bandwidth: {self.bandwidth:.4f}
-"""
+    ==================================================
+    KDE STATISTICS for column: {self.column}
+    ==================================================
+    Count: {len(data_array)}
+    Mean: {mean:.4f}
+    Median: {median:.4f}
+    Mode: {mode:.4f}
+    Min: {min_val:.4f}
+    Max: {max_val:.4f}
+    Variance: {variance:.4f}
+    Skewness: {skewness:.4f}
+    Kurtosis: {kurtosis:.4f}
+    Interquartile Range (IQR): {iqr:.4f}
+     - 25th Percentile: {q25:.4f}
+     - 75th Percentile: {q75:.4f}
+    Kernel: {self.kernel}
+    Bandwidth: {self.bandwidth:.4f}
+    Z-Score (Current): {(self.current - mean) / np.std(data_array):.2f}
+    Current Value: {self.current:.2f}
+    """
         return stats_text.strip()
 
     def get_extended_statistics(self):
-        """
-        Get extended KDE statistics including probabilities and return periods.
-
-        Returns:
-        --------
-        str:
-            Formatted string containing extended statistics
-        """
         current_value = self.current
         current_percentile = self.calculate_percentile(current_value)
 
-        # Calculate probability intervals
         prob_below_15 = self.calculate_probability(0, 15) * 100
         prob_15_to_20 = self.calculate_probability(15, 20) * 100
         prob_20_to_30 = self.calculate_probability(20, 30) * 100
         prob_above_30 = self.calculate_probability(30, None) * 100
 
-        # Calculate return periods
         return_period_30 = self.estimate_expected_return_period(30)
         return_period_40 = self.estimate_expected_return_period(40)
         return_period_50 = self.estimate_expected_return_period(50)
 
-        # Calculate expected shortfall
         expected_above_30 = self.estimate_conditional_expectation(30)
         expected_above_40 = self.estimate_conditional_expectation(40)
 
-        # Calculate quantiles
         data_array = self.data[self.column].values
         q1 = np.percentile(data_array, 1)
         q5 = np.percentile(data_array, 5)
@@ -308,7 +193,68 @@ Key Quantiles:
 - 95%: {q95:.2f}
 - 99%: {q99:.2f}
 """
-
-
-
         return stats_text.strip()
+
+    def plot_kde_with_histogram(self, bins=30, filename="kde_plot.png"):
+        data_array = self.data[self.column].values
+        x_vals, pdf_vals = self.estimate_pdf()
+
+        plt.figure(figsize=(12, 6))
+        plt.hist(data_array, bins=bins, density=True, alpha=0.4, color='grey', label='Histogram')
+        plt.plot(x_vals, pdf_vals, color='blue', lw=2, label='KDE')
+        plt.fill_between(x_vals, pdf_vals, alpha=0.2, color='blue')
+
+        mean = np.mean(data_array)
+        median = np.median(data_array)
+        mode = x_vals[np.argmax(pdf_vals)]
+        current = self.current
+
+        q25 = np.percentile(data_array, 25)
+        q75 = np.percentile(data_array, 75)
+
+        plt.axvline(mean, color='red', linestyle='--', label=f"Mean: {mean:.2f}")
+        plt.axvline(median, color='green', linestyle='--', label=f"Median: {median:.2f}")
+        plt.axvline(mode, color='purple', linestyle='--', label=f"Mode: {mode:.2f}")
+        plt.axvline(current, color='black', linestyle='-', label=f"Current: {current:.2f}")
+
+        # Plot shaded interquartile range
+        plt.axvspan(q25, q75, color='orange', alpha=0.2, label='Interquartile Range (25%-75%)')
+
+        z_score = (current - mean) / np.std(data_array)
+        plt.title(f"KDE and Histogram (Z-Score: {z_score:.2f})")
+        plt.xlabel(self.column)
+        plt.ylabel("Density")
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(filename)
+        plt.close()
+
+    def plot_boxplot_with_mean_iqr(self, filename="boxplot_with_mean_iqr.png"):
+        data_array = self.data[self.column].values
+
+        # Calculate key statistics
+        mean = np.mean(data_array)
+        q25 = np.percentile(data_array, 25)
+        q75 = np.percentile(data_array, 75)
+        iqr = q75 - q25
+
+        # Create the box plot
+        plt.figure(figsize=(12, 6))
+        plt.boxplot(data_array, vert=False, patch_artist=True, boxprops=dict(facecolor='lightblue', color='black'),
+                    whiskerprops=dict(color='black'), flierprops=dict(markerfacecolor='red', marker='o'))
+
+        # Add the mean and IQR markers
+        #plt.axvline(mean, color='red', linestyle='--', label=f"Mean: {mean:.2f}")
+        plt.axvspan(q25, q75, color='orange', alpha=0.2, label=f"IQR: {q25:.2f} - {q75:.2f}")
+
+        # Set labels and title
+        plt.xlabel(self.column)
+        plt.title(f"Boxplot IQR")
+        plt.legend()
+        plt.tight_layout()
+
+        # Save the plot
+        plt.savefig(filename)
+        plt.close()
+
+

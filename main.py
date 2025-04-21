@@ -100,7 +100,6 @@ def main():
 
     kde_analyzer.plot_kde_with_histogram()
     kde_analyzer.plot_boxplot_with_mean_iqr()
-    #kde_analyzer.save_kde_plot1("kde_plot1.png")
 
     # Create both analyzers
     mr_analyzer = MeanReversionAnalyser(yfinance_data["Close"].values, mean=kde_analyzer.data[kde_analyzer.column].mean())

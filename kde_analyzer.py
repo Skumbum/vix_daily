@@ -245,12 +245,12 @@ Key Quantiles:
 
         # Add the mean and IQR markers
         #plt.axvline(mean, color='red', linestyle='--', label=f"Mean: {mean:.2f}")
-        plt.axvspan(q25, q75, color='orange', alpha=0.2, label=f"IQR: {q25:.2f} - {q75:.2f}")
+        #plt.axvspan(q25, q75, color='orange', alpha=0.2, label=f"IQR: {q25:.2f} - {q75:.2f}")
 
         # Set labels and title
         plt.xlabel(self.column)
         plt.title(f"Boxplot IQR")
-        plt.legend()
+        #plt.legend()
         plt.tight_layout()
 
         # Save the plot

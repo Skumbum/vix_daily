@@ -340,6 +340,7 @@ class MeanReversionAnalyser:
         plt.ylabel('Value')
         plt.legend()
         plt.grid(True, alpha=0.3)
+        plt.savefig("1.png")
         return plt.gcf()
 
     def summary(self, current_value=None):

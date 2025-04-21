@@ -3,81 +3,96 @@ from empirical_stats_descriptive import EmpiricalStatsDescriptive
 from log_normal_analyser import LogNormalAnalyser
 from kde_analyzer import KDEAnalyzer
 from mean_reversion_analyser import MeanReversionAnalyser
+from range_analyser import RangeAnalyser
+from bar_range_analyser import BarRange
+from csv_data_loader import CSVDataLoader
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
 
+
+def print_dict(d, indent=0):
+    for key, value in d.items():
+        if isinstance(value, dict):  # If the value is a dictionary, recurse
+            print(f"{' ' * indent}{key}:")
+            print_dict(value, indent + 2)
+        else:  # If the value is a float or other type, print it
+            print(f"{' ' * indent}{key}: {value:.2f}" if isinstance(value, np.float64) else f"{' ' * indent}{key}: {value}")
+
 def main():
     # Fetch VIX data
     #vix_data = YahooFinanceDataFetcher().download_data("^VIX", start="2024-01-01")
-    vix_data = YahooFinanceDataFetcher().download_data()
-    vix_stats = EmpiricalStatsDescriptive(vix_data)
+    #yfinance_data = YahooFinanceDataFetcher().download_data("^VIX")
+    #empirical_stats = EmpiricalStatsDescriptive(yfinance_data)
+    csv_loader = CSVDataLoader('VIX_History (1).csv')
+    yfinance_data = csv_loader.load_data()
+    empirical_stats = EmpiricalStatsDescriptive(yfinance_data)
 
     # Print basic statistics with a header
     print("\n" + "=" * 50)
     print("BASIC STATISTICS")
     print("=" * 50)
-    print(f"Row Count: {vix_stats.get_row_count}")
-    print(f"Current: {vix_stats.get_current:.2f}")
-    print(f"Mean: {vix_stats.get_mean:.2f}")
-    print(f"Median: {vix_stats.get_median:.2f}")
-    print(f"Mode: {vix_stats.get_mode:.2f}")
-    print(f"Min: {vix_stats.get_min:.2f}")
-    print(f"Max: {vix_stats.get_max:.2f}")
-    print(f"Range: {vix_stats.get_range:.2f}")
-    print(f"Standard Deviation: {vix_stats.get_std_dev:.2f}")
-    print(f"Variance: {vix_stats.get_variance:.2f}")
+    print(f"Row Count: {empirical_stats.get_row_count}")
+    print(f"Current: {empirical_stats.get_current:.2f}")
+    print(f"Mean: {empirical_stats.get_mean:.2f}")
+    print(f"Median: {empirical_stats.get_median:.2f}")
+    print(f"Mode: {empirical_stats.get_mode:.2f}")
+    print(f"Min: {empirical_stats.get_min:.2f}")
+    print(f"Max: {empirical_stats.get_max:.2f}")
+    print(f"Range: {empirical_stats.get_range:.2f}")
+    print(f"Standard Deviation: {empirical_stats.get_std_dev:.2f}")
+    print(f"Variance: {empirical_stats.get_variance:.2f}")
 
     # Print percentiles with a header
     print("\n" + "=" * 50)
     print("PERCENTILE STATISTICS")
     print("=" * 50)
-    print(f"Current Percentile: {vix_stats.current_percentile:.2f}")
-    print(f"Percentile 25: {vix_stats.get_percentile_25:.2f}")
-    print(f"Percentile 50: {vix_stats.get_percentile_50:.2f}")
-    print(f"Percentile 75: {vix_stats.get_percentile_75:.2f}")
-    print(f"Percentile 90: {vix_stats.get_percentile_90:.2f}")
-    print(f"Percentile 95: {vix_stats.get_percentile_95:.2f}")
-    print(f"IQR: {vix_stats.get_iqr:.2f}")
+    print(f"Current Percentile: {empirical_stats.current_percentile:.2f}")
+    print(f"Percentile 25: {empirical_stats.get_percentile_25:.2f}")
+    print(f"Percentile 50: {empirical_stats.get_percentile_50:.2f}")
+    print(f"Percentile 75: {empirical_stats.get_percentile_75:.2f}")
+    print(f"Percentile 90: {empirical_stats.get_percentile_90:.2f}")
+    print(f"Percentile 95: {empirical_stats.get_percentile_95:.2f}")
+    print(f"IQR: {empirical_stats.get_iqr:.2f}")
 
     # Print advanced statistics with a header
     print("\n" + "=" * 50)
     print("ADVANCED STATISTICS")
     print("=" * 50)
-    print(f"MAD: {vix_stats.get_mad:.2f}")
-    print(f"Z-Score: {vix_stats.get_z_score:.2f}")
-    print(f"Geometric Mean: {vix_stats.get_geometric_mean:.2f}")
-    print(f"Harmonic Mean: {vix_stats.get_harmonic_mean:.2f}")
-    print(f"Skewness: {vix_stats.get_skewness:.2f}")
-    print(f"Kurtosis: {vix_stats.get_kurtosis:.2f}")
-    print(f"Coefficient of Variation (CV): {vix_stats.get_cv:.2f}")
+    print(f"MAD: {empirical_stats.get_mad:.2f}")
+    print(f"Z-Score: {empirical_stats.get_z_score:.2f}")
+    print(f"Geometric Mean: {empirical_stats.get_geometric_mean:.2f}")
+    print(f"Harmonic Mean: {empirical_stats.get_harmonic_mean:.2f}")
+    print(f"Skewness: {empirical_stats.get_skewness:.2f}")
+    print(f"Kurtosis: {empirical_stats.get_kurtosis:.2f}")
+    print(f"Coefficient of Variation (CV): {empirical_stats.get_cv:.2f}")
 
     # Print time-series related statistics with a header
     print("\n" + "=" * 50)
     print("TIME-SERIES STATISTICS")
     print("=" * 50)
-    print(f"Rolling 7 Day Mean: {vix_stats.get_rolling_mean7:.2f}")
-    print(f"Rolling 30 Day Mean: {vix_stats.get_rolling_mean30:.2f}")
-    print(f"30-Day Volatility: {vix_stats.get_30_day_volatility:.2f}")
-    print(f"Stability Score: {vix_stats.get_stability_score:.2f}")
-    print(f"RSI: {vix_stats.get_rsi:.2f}\n")
+    print(f"Rolling 7 Day Mean: {empirical_stats.get_rolling_mean7:.2f}")
+    print(f"Rolling 30 Day Mean: {empirical_stats.get_rolling_mean30:.2f}")
+    print(f"30-Day Volatility: {empirical_stats.get_30_day_volatility:.2f}")
+    print(f"Stability Score: {empirical_stats.get_stability_score:.2f}")
+    print(f"RSI: {empirical_stats.get_rsi:.2f}\n")
 
     # Create LogNormalAnalyser for VIX data and print basic statistics
     print("\n" + "=" * 50)
-    print("LOG-NORMAL ANALYSIS FOR VIX DATA")
+    print("LOG-NORMAL ANALYSIS")
     print("=" * 50)
-    vix_analyser = LogNormalAnalyser(vix_data, column="Close")
+    vix_analyser = LogNormalAnalyser(yfinance_data, column="Close")
     print(vix_analyser.get_statistics())
     print(vix_analyser.get_extended_statistics())
 
 
-    kde_analyzer = KDEAnalyzer(vix_data, column="Close")
-    lognorm_analyzer = LogNormalAnalyser(vix_data, column="Close")
+    kde_analyzer = KDEAnalyzer(yfinance_data, column="Close")
+    lognorm_analyzer = LogNormalAnalyser(yfinance_data, column="Close")
 
     # KDE Analysis
     print("\n" + "=" * 50)
-    print("KDE ANALYSIS FOR VIX DATA")
+    print("KDE ANALYSIS")
     print("=" * 50)
     print(kde_analyzer.get_statistics())
     print(kde_analyzer.get_extended_statistics())
@@ -88,7 +103,7 @@ def main():
     #kde_analyzer.save_kde_plot1("kde_plot1.png")
 
     # Create both analyzers
-    mr_analyzer = MeanReversionAnalyser(vix_data["Close"].values, mean=kde_analyzer.data[kde_analyzer.column].mean())
+    mr_analyzer = MeanReversionAnalyser(yfinance_data["Close"].values, mean=kde_analyzer.data[kde_analyzer.column].mean())
 
     # Get distribution insights from KDE
     kde_stats = kde_analyzer.get_statistics()
@@ -110,7 +125,60 @@ def main():
     print(f"\nKDE return period to mean: {return_periods['mean']:.2f} days")
     print(f"Mean reversion time estimate: {expected_time_to_mean:.2f} days\n")
 
-    print(mr_analyzer.summary())
+    #print(mr_analyzer.summary())
+    print("\n" + "=" * 50)
+    print("MEAN REVERSION ANALYSIS")
+    print("=" * 50)
+    print_dict(mr_analyzer.summary())
+    mr_analyzer.plot_simulated_paths()
+
+    # Range Analysis
+    print("\n" + "=" * 50)
+    print("RANGE ANALYSIS")
+    print("=" * 50)
+
+    # Define quantile-based ranges and labels
+    ranges = [(0, 13.85), (13.85, 22.83), (22.83, 33.20), (33.20, 100)]
+    labels = ["Low", "Moderate", "High", "Extreme"]
+
+    # Initialize RangeAnalyser
+    analyser = RangeAnalyser(yfinance_data["Close"], ranges, labels)
+
+    # Output results
+    analyser.histogram_output()
+    analyser.plot_histogram()
+    print("\nTransition Matrix:")
+    print(analyser.build_transition_matrix())
+    analyser.plot_transition_matrix()
+    print("\nAverage Durations:")
+    print(analyser.compute_average_durations())
+    analyser.plot_durations()
+    print("\nExtreme Events:")
+    print(analyser.track_extreme_events())
+
+
+    # Instantiate BarRange analyser
+    analyser = BarRange(yfinance_data)
+
+    # Get summary statistics (including ATR)
+    stats = analyser.summary_statistics()
+    print("\n")
+
+    # Print the statistics using the existing print_dict function
+    print("=" * 50)
+    print("BAR RANGE SUMMARY STATISTICS")
+    print("=" * 50)
+    print_dict(stats)
+
+    print("\n")
+
+    # Print Text-based Histogram
+    range_histogram_output = analyser.range_histogram_text(bins=100, cols=5)
+    print(range_histogram_output)
+
+    # Plot and save the histogram
+    analyser.plot_histogram(bins=100)
+
 
 
 if __name__ == "__main__":

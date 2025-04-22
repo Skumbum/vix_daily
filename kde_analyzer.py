@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -195,7 +196,11 @@ Key Quantiles:
 """
         return stats_text.strip()
 
-    def plot_kde_with_histogram(self, bins=30, filename="kde_plot.png"):
+    def plot_kde_with_histogram(self, bins=30, filename="Plot/kde_plot.png"):
+
+        # Create subdirectory if it doesn't exist
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+
         data_array = self.data[self.column].values
         x_vals, pdf_vals = self.estimate_pdf()
 
@@ -229,7 +234,11 @@ Key Quantiles:
         plt.savefig(filename)
         plt.close()
 
-    def plot_boxplot_with_mean_iqr(self, filename="boxplot_with_mean_iqr.png"):
+    def plot_boxplot_with_mean_iqr(self, filename="Plot/boxplot_with_mean_iqr.png"):
+
+        # Create subdirectory if it doesn't exist
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+
         data_array = self.data[self.column].values
 
         # Calculate key statistics

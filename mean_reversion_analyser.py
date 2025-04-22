@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
@@ -307,7 +308,7 @@ class MeanReversionAnalyser:
         plt.grid(True, alpha=0.3)
         return plt.gcf()
 
-    def plot_simulated_paths(self, paths=None, n_paths=10, periods=60):
+    def plot_simulated_paths(self, paths=None, n_paths=10, periods=60, filename="Plot/mr_sim_paths.png"):
         """
         Plot sample of simulated paths
 
@@ -320,6 +321,9 @@ class MeanReversionAnalyser:
         periods : int, optional
             Number of periods to simulate if paths not provided
         """
+        # Create subdirectory if it doesn't exist
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+
         if paths is None:
             paths = self.simulate_paths(periods=periods)
 
@@ -340,7 +344,7 @@ class MeanReversionAnalyser:
         plt.ylabel('Value')
         plt.legend()
         plt.grid(True, alpha=0.3)
-        plt.savefig("1.png")
+        plt.savefig(filename)
         return plt.gcf()
 
     def summary(self, current_value=None):

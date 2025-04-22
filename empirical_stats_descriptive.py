@@ -1,184 +1,191 @@
 import numpy as np
 import pandas as pd
+from functools import cached_property
 
 
 class EmpiricalStatsDescriptive:
     def __init__(self, data):
         self.data = data
-        # For simplicity, we'll use the 'Close' column for calculations if it exists
         if isinstance(data, pd.DataFrame) and 'Close' in data.columns:
             self.series = data['Close']
         elif isinstance(data, pd.DataFrame):
-            self.series = data.iloc[:, 0]  # Use first column if 'Close' doesn't exist
+            self.series = data.iloc[:, 0]
         else:
-            self.series = data  # Assume it's already a Series
+            self.series = data
 
         self.update_stats()
 
     def update_stats(self):
-        # Compute basic stats
-        self.mean = self.series.mean()
-        self.std_dev = self.series.std()
-        self.max = self.series.max()
-        self.min = self.series.min()
-        self.median = self.series.median()
-        self.mode = self.series.mode().iloc[0] if not self.series.mode().empty else None
-        self.variance = self.series.var()
+        self._mean = self.series.mean()
+        self._std_dev = self.series.std()
+        self._max = self.series.max()
+        self._min = self.series.min()
+        self._median = self.series.median()
+        self._mode = self.series.mode().iloc[0] if not self.series.mode().empty else None
+        self._variance = self.series.var()
+        self._mad = self.calculate_mad(self.series)
 
-        # Manually calculate MAD
-        self.mad = self.calculate_mad(self.series)
+        current_value = self.series.iloc[-1]
+        self._z_score = (current_value - self._mean) / self._std_dev if self._std_dev != 0 else None
 
-        # Make sure we use scalar values for the z-score calculation
-        current_value = self.series.iloc[-1]  # Get the most recent data point (last value)
-        self.z_score = (current_value - self.mean) / self.std_dev if self.std_dev != 0 else None
-
-        self.geometric_mean = self.calculate_geometric_mean(self.series)
-        self.harmonic_mean = self.calculate_harmonic_mean(self.series)
-        self.skewness = self.series.skew()
-        self.kurtosis = self.series.kurt()
-        self.iqr = self.series.quantile(0.75) - self.series.quantile(0.25)
-        self.range = self.max - self.min
-        self.cv = self.std_dev / self.mean if self.mean != 0 else None
+        self._geometric_mean = self.calculate_geometric_mean(self.series)
+        self._harmonic_mean = self.calculate_harmonic_mean(self.series)
+        self._skewness = self.series.skew()
+        self._kurtosis = self.series.kurt()
+        self._iqr = self.series.quantile(0.75) - self.series.quantile(0.25)
+        self._range = self._max - self._min
+        self._cv = self._std_dev / self._mean if self._mean != 0 else None
 
     def calculate_mad(self, series):
         return np.mean(np.abs(series - series.mean()))
 
     def calculate_geometric_mean(self, data):
-        # Filter out non-positive values to avoid errors with logarithms
         positive_data = data[data > 0]
         if len(positive_data) == 0:
             return None
-        # Use logarithms to avoid overflow
         log_data = np.log(positive_data)
         return np.exp(np.mean(log_data))
 
     def calculate_harmonic_mean(self, data):
-        # Harmonic mean can only be calculated on positive values
         positive_data = data[data > 0]
         if len(positive_data) == 0:
             return None
         return len(positive_data) / np.sum(1.0 / positive_data)
 
-    # Other methods to return calculated statistics
     @property
-    def get_row_count(self):
+    def row_count(self):
         return len(self.data)
 
     @property
-    def get_current(self):
+    def current(self):
         return self.series.iloc[-1]
 
     @property
-    def get_mean(self):
-        return self.mean
+    def mean(self): return self._mean
 
     @property
-    def get_median(self):
-        return self.median
+    def median(self): return self._median
 
     @property
-    def get_mode(self):
-        return self.mode
+    def mode(self): return self._mode
 
     @property
-    def get_min(self):
-        return self.min
+    def min(self): return self._min
 
     @property
-    def get_max(self):
-        return self.max
+    def max(self): return self._max
 
     @property
-    def get_std_dev(self):
-        return self.std_dev
+    def std_dev(self): return self._std_dev
 
     @property
-    def get_variance(self):
-        return self.variance
+    def variance(self): return self._variance
 
     @property
-    def get_mad(self):
-        return self.mad
+    def mad(self): return self._mad
 
     @property
-    def get_z_score(self):
-        return self.z_score
+    def z_score(self): return self._z_score
 
     @property
-    def get_geometric_mean(self):
-        return self.geometric_mean
+    def geometric_mean(self): return self._geometric_mean
 
     @property
-    def get_harmonic_mean(self):
-        return self.harmonic_mean
+    def harmonic_mean(self): return self._harmonic_mean
 
     @property
-    def get_skewness(self):
-        return self.skewness
+    def skewness(self): return self._skewness
 
     @property
-    def get_kurtosis(self):
-        return self.kurtosis
+    def kurtosis(self): return self._kurtosis
 
     @property
-    def get_iqr(self):
-        return self.iqr
+    def iqr(self): return self._iqr
 
     @property
-    def get_range(self):
-        return self.range
+    def range(self): return self._range
 
     @property
-    def get_cv(self):
-        return self.cv
+    def cv(self): return self._cv
 
     @property
     def current_percentile(self):
-        """Calculate the percentile rank of the current value within the dataset."""
-        current_value = self.series.iloc[-1]  # Get the most recent data point
-        return (self.series.rank(pct=True).iloc[-1]) * 100
+        return self.series.rank(pct=True).iloc[-1] * 100
 
     @property
-    def get_percentile_25(self):
+    def percentile_25(self):
         return self.series.quantile(0.25)
 
     @property
-    def get_percentile_50(self):
+    def percentile_50(self):
         return self.series.quantile(0.50)
 
     @property
-    def get_percentile_75(self):
+    def percentile_75(self):
         return self.series.quantile(0.75)
 
     @property
-    def get_percentile_90(self):
+    def percentile_90(self):
         return self.series.quantile(0.90)
 
     @property
-    def get_percentile_95(self):
+    def percentile_95(self):
         return self.series.quantile(0.95)
 
     @property
-    def get_rolling_mean7(self):
+    def rolling_mean_7(self):
         return self.series.rolling(window=7).mean().iloc[-1]
 
     @property
-    def get_rolling_mean30(self):
+    def rolling_mean_30(self):
         return self.series.rolling(window=30).mean().iloc[-1]
 
     @property
-    def get_30_day_volatility(self):
+    def volatility_30d(self):
         return self.series.pct_change().rolling(window=30).std().iloc[-1]
 
     @property
-    def get_stability_score(self):
-        return 1 / (1 + self.get_cv) if self.get_cv is not None else None
+    def stability_score(self):
+        return 1 / (1 + self.cv) if self.cv is not None else None
 
     @property
-    def get_rsi(self):
+    def rsi(self):
         delta = self.series.diff()
-        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+        gain = delta.where(delta > 0, 0).rolling(window=14).mean()
+        loss = -delta.where(delta < 0, 0).rolling(window=14).mean()
         rs = gain / loss
         rsi_series = 100 - (100 / (1 + rs))
         return rsi_series.iloc[-1]
+
+    def stats_summary(self):
+        return {
+            "row_count": self.row_count,
+            "current": self.current,
+            "mean": self.mean,
+            "median": self.median,
+            "mode": self.mode,
+            "min": self.min,
+            "max": self.max,
+            "std_dev": self.std_dev,
+            "variance": self.variance,
+            "mad": self.mad,
+            "z_score": self.z_score,
+            "geometric_mean": self.geometric_mean,
+            "harmonic_mean": self.harmonic_mean,
+            "skewness": self.skewness,
+            "kurtosis": self.kurtosis,
+            "iqr": self.iqr,
+            "range": self.range,
+            "cv": self.cv,
+            "current_percentile": self.current_percentile,
+            "percentile_25": self.percentile_25,
+            "percentile_50": self.percentile_50,
+            "percentile_75": self.percentile_75,
+            "percentile_90": self.percentile_90,
+            "percentile_95": self.percentile_95,
+            "rolling_mean_7": self.rolling_mean_7,
+            "rolling_mean_30": self.rolling_mean_30,
+            "volatility_30d": self.volatility_30d,
+            "stability_score": self.stability_score,
+            "rsi": self.rsi
+        }

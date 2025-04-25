@@ -1,233 +1,251 @@
-from yahoo_finance_data_fetcher import YahooFinanceDataFetcher
-from empirical_stats_descriptive import EmpiricalStatsDescriptive
-from log_normal_analyser import LogNormalAnalyser
-from kde_analyzer import KDEAnalyzer
-from mean_reversion_analyser import MeanReversionAnalyser
-from range_analyser import RangeAnalyser
-from bar_range_analyser import BarRange
-from csv_data_loader import CSVDataLoader
-import matplotlib.pyplot as plt
-import numpy as np
+from turtledemo.penrose import start
+
+import yfinance as yf
 import pandas as pd
+from datetime import datetime, timedelta
+from yahoo_finance_data_fetcher import YahooFinanceDataFetcher
+from csv_data_loader import CSVDataLoader
+from empirical_stats_descriptive import EmpiricalStatsDescriptive
+from range_analyser import RangeAnalyser
+from extreme_event_analyser import ExtremeEventAnalyser
+from volatility_analyser import VolatilityAnalyser
+from bar_range_analyser import BarRange
+from kde_analyser import KDEAnalyser
+from log_normal_analyser import LogNormalAnalyser
+from mean_reversion_analyser import MeanReversionAnalyser
+
+def generate_report(ticker, days, price_stats, returns_stats, range_analysis, extreme_analysis, volatility_analysis,
+                    bar_range_analysis, kde_analysis, log_normal_analysis, mean_reversion_analysis):
+    print("\n=== VIX Descriptive Statistics Report ===")
+    print(f"Ticker: {ticker}")
+    print(f"Period: {days} days\n")
+
+    # Summary Statistics
+    print("--- Summary Statistics ---")
+    print("Price:")
+    for key in ['row_count', 'current', 'mean', 'median', 'mode', 'min', 'max', 'std_dev', 'variance', 'mad', 'midrange']:
+        value = price_stats.get(key)
+        print(f"  {key}: {value:.2f}" if isinstance(value, (int, float)) else f"  {key}: {value}")
+    print("Log Returns:")
+    for key in ['row_count', 'current', 'mean', 'median', 'mode', 'min', 'max', 'std_dev', 'variance', 'mad', 'midrange']:
+        value = returns_stats.get(key)
+        print(f"  {key}: {value:.2f}" if isinstance(value, (int, float)) else f"  {key}: {value}")
+
+    # Distribution Characteristics
+    print("\n--- Distribution Characteristics ---")
+    print("Price:")
+    for key in ['skewness', 'kurtosis', 'entropy', 'geometric_mean', 'harmonic_mean']:
+        value = price_stats.get(key)
+        print(f"  {key}: {value:.2f}" if isinstance(value, (int, float)) else f"  {key}: {value}")
+    print("Log Returns:")
+    for key in ['skewness', 'kurtosis', 'entropy', 'geometric_mean', 'harmonic_mean']:
+        value = returns_stats.get(key)
+        print(f"  {key}: {value:.2f}" if isinstance(value, (int, float)) else f"  {key}: {value}")
+    print("KDE Parameters:")
+    for key in ['Kernel', 'Bandwidth']:
+        value = kde_analysis[f"KDE STATISTICS for column: Close"].get(key)
+        print(f"  {key}: {value}")
+    print("Log-Normal Parameters:")
+    for key in ['Log-Mean (μ)', 'Log-Std Dev (σ)', 'Shape (σ)', 'Scale (e^μ)', 'Mean', 'Median', 'Mode', 'Variance', 'Skewness', 'Kurtosis']:
+        value = log_normal_analysis[f"LOG-NORMAL STATISTICS for column: Close"].get(key)
+        print(f"  {key}: {value:.2f}" if isinstance(value, (int, float)) else f"  {key}: {value}")
+
+    # Percentiles and Ranges
+    print("\n--- Percentiles and Ranges ---")
+    print("Price Percentiles:")
+    for key in ['current_percentile', 'percentile_5', 'percentile_10', 'percentile_25', 'percentile_50', 'percentile_75', 'percentile_90', 'percentile_95', 'percentile_99', 'iqr', 'range']:
+        value = price_stats.get(key)
+        print(f"  {key}: {value:.2f}" if isinstance(value, (int, float)) else f"  {key}: {value}")
+    print("Log Returns Percentiles:")
+    for key in ['current_percentile', 'percentile_5', 'percentile_10', 'percentile_25', 'percentile_50', 'percentile_75', 'percentile_90', 'percentile_95', 'percentile_99', 'iqr', 'range']:
+        value = returns_stats.get(key)
+        print(f"  {key}: {value:.2f}" if isinstance(value, (int, float)) else f"  {key}: {value}")
+    print("Range Analysis:")
+    for key, value in range_analysis['counts'].items():
+        print(f"  {key}: {value}")
+    print(f"  Current Range: {range_analysis['current_range']}")
+    print("KDE Percentiles and Intervals:")
+    print(f"  Current Percentile: {kde_analysis['EXTENDED KDE STATISTICS']['Current Percentile']}")
+    for key, value in kde_analysis['EXTENDED KDE STATISTICS']['Key Quantiles'].items():
+        print(f"  {key}: {value:.2f}")
+    print("Log-Normal Percentiles and Intervals:")
+    print(f"  Current Percentile: {log_normal_analysis['EXTENDED LOG-NORMAL STATISTICS']['Current Percentile']}")
+    for key, value in log_normal_analysis['EXTENDED LOG-NORMAL STATISTICS']['Key Quantiles'].items():
+        print(f"  {key}: {value:.2f}")
+    for key, value in log_normal_analysis['EXTENDED LOG-NORMAL STATISTICS']['95% Confidence Interval'].items():
+        print(f"  {key}: {value:.2f}")
+
+    # Volatility and Risk Metrics
+    print("\n--- Volatility and Risk Metrics ---")
+    print("Price Variability:")
+    for key in ['cv', 'cv_percent', 'cv_abs_percent', 'sem', 'volatility_30d', 'rolling_mean_7', 'rolling_mean_30']:
+        value = price_stats.get(key)
+        print(f"  {key}: {value:.2f}" if isinstance(value, (int, float)) else f"  {key}: {value}")
+    print("Log Returns Variability:")
+    for key in ['cv', 'cv_percent', 'cv_abs_percent', 'sem', 'volatility_30d', 'rolling_mean_7', 'rolling_mean_30']:
+        value = returns_stats.get(key)
+        print(f"  {key}: {value:.2f}" if isinstance(value, (int, float)) else f"  {key}: {value}")
+    print("Volatility Analysis:")
+    print(f"  Rolling Volatility (30-day): {volatility_analysis['rolling_volatility']:.4f}")
+    print(f"  Annualized Volatility: {volatility_analysis['annualized_volatility']:.4f}")
+    print("Extreme Events:")
+    print(f"  Count of Extreme Events (>40): {extreme_analysis['count']}")
+    if extreme_analysis['count'] > 0:
+        print("  Extreme Event Dates and Values:")
+        for date, value in zip(extreme_analysis['dates'], extreme_analysis['values']):
+            print(f"    Date: {date}, Value: {value:.2f}")
+    print("Bar Range Analysis:")
+    for key, value in bar_range_analysis['Summary Statistics'].items():
+        print(f"  {key}: {value:.2f}")
+    print("  Daily Range Distribution:")
+    for range_str, count in bar_range_analysis['Range Histogram']['Daily Range Distribution'].items():
+        print(f"    {range_str}: {count}")
+    print("  Range Histogram Summary:")
+    for key, value in bar_range_analysis['Range Histogram']['Summary'].items():
+        print(f"    {key}: {value}")
+
+    # Stationarity and Dynamics
+    print("\n--- Stationarity and Dynamics ---")
+    print("Price Dynamics:")
+    for key in ['hurst', 'hurst_dfa', 'z_score', 'autocorrelation', 'trend_slope', 'adf_statistic', 'adf_pvalue', 'kpss_statistic', 'kpss_pvalue', 'kpss_warning', 'rsi', 'stability_score']:
+        value = price_stats.get(key)
+        print(f"  {key}: {value:.2f}" if isinstance(value, (int, float)) else f"  {key}: {value}")
+    print("Log Returns Dynamics:")
+    for key in ['hurst', 'hurst_dfa', 'z_score', 'autocorrelation', 'trend_slope', 'adf_statistic', 'adf_pvalue', 'kpss_statistic', 'kpss_pvalue', 'kpss_warning', 'rsi', 'stability_score']:
+        value = returns_stats.get(key)
+        print(f"  {key}: {value:.2f}" if isinstance(value, (int, float)) else f"  {key}: {value}")
+
+    # Mean Reversion Properties
+    print("\n--- Mean Reversion Properties ---")
+    print("Mean Reversion Analysis:")
+    print(f"  Current Value: {mean_reversion_analysis['current_value']:.2f}")
+    print(f"  Mean: {mean_reversion_analysis['mean']:.2f}")
+    print(f"  Distance to Mean: {mean_reversion_analysis['distance_to_mean']:.2f}")
+    print(f"  Percent Deviation: {mean_reversion_analysis['percent_deviation']:.2f}%")
+    print("  AR Model:")
+    print(f"    Phi: {mean_reversion_analysis['ar_model']['phi']:.2f}")
+    print(f"    Half-Life: {mean_reversion_analysis['ar_model']['half_life']:.2f} days")
+    print(f"    Time to Mean Estimate: {mean_reversion_analysis['ar_model']['time_to_mean_estimate']:.2f} days")
+    print("  OU Model:")
+    print(f"    Theta: {mean_reversion_analysis['ou_model']['theta']:.2f}")
+    print(f"    Mu: {mean_reversion_analysis['ou_model']['mu']:.2f}")
+    print(f"    Sigma: {mean_reversion_analysis['ou_model']['sigma']:.2f}")
+    print(f"    Half-Life: {mean_reversion_analysis['ou_model']['half_life']:.2f} days")
+    print(f"    Time to Mean Estimate: {mean_reversion_analysis['ou_model']['time_to_mean_estimate']:.2f} days")
+    print("Log-Normal Half-Life:")
+    print(f"  Estimated Half-Life to Median: {log_normal_analysis['EXTENDED LOG-NORMAL STATISTICS']['Estimated Half-Life to Median']}")
+    print("\nStationarity Warning: High Hurst exponent detected in price series. Mean reversion results may be unreliable.")
+
+    # Probability and Return Periods
+    print("\n--- Probability and Return Periods ---")
+    print("KDE Probabilities:")
+    for key, value in kde_analysis['EXTENDED KDE STATISTICS']['Probability Intervals'].items():
+        print(f"  {key}: {value}")
+    print("KDE Return Periods (Days):")
+    if 'Return Periods (Days)' in kde_analysis['EXTENDED KDE STATISTICS']:
+        for key, value in kde_analysis['EXTENDED KDE STATISTICS']['Return Periods (Days)'].items():
+            print(f"  {key}: {value:.2f}")
+    else:
+        print("  Warning: Return Periods not available in KDE analysis.")
+    print("KDE Expected Values:")
+    for key, value in kde_analysis['EXTENDED KDE STATISTICS']['Expected Values'].items():
+        print(f"  {key}: {value:.2f}")
+    print("Log-Normal Probabilities:")
+    for key, value in log_normal_analysis['EXTENDED LOG-NORMAL STATISTICS']['Probability Intervals'].items():
+        print(f"  {key}: {value}")
+    print("Log-Normal Return Periods (Days):")
+    if 'Return Periods (Days)' in log_normal_analysis['EXTENDED LOG-NORMAL STATISTICS']:
+        for key, value in log_normal_analysis['EXTENDED LOG-NORMAL STATISTICS']['Return Periods (Days)'].items():
+            print(f"  {key}: {value:.2f}")
+    else:
+        print("  Warning: Return Periods not available in Log-Normal analysis.")
+    print("Log-Normal Expected Values:")
+    for key, value in log_normal_analysis['EXTENDED LOG-NORMAL STATISTICS']['Expected Values'].items():
+        print(f"  {key}: {value:.2f}")
+
+    print("\n--- Generating Plots ---")
+    print("Plots saved: histogram.png, transition_matrix.png, durations.png, bar_range_histogram.png, kde_plot.png, boxplot_with_mean_iqr.png, mr_sim_paths.png")
+
+def main(create_report=False, csv_filepath=None):
+    ticker = "^VIX"
+    print(f"Analysing ticker: {ticker}")
+
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=5 * 365)
 
 
-def print_dict(d, indent=0):
-    for key, value in d.items():
-        if isinstance(value, dict):  # If the value is a dictionary, recurse
-            print(f"{' ' * indent}{key}:")
-            print_dict(value, indent + 2)
-        else:  # If the value is a float or other type, print it
-            print(f"{' ' * indent}{key}: {value:.2f}" if isinstance(value, (np.float64, float)) else f"{' ' * indent}{key}: {value}")
+    # Load data
+    if csv_filepath:
+        print(f"Loading data from CSV: {csv_filepath}")
+        loader = CSVDataLoader(csv_filepath, start=start_date, end=end_date)
+        data = loader.load_data()
+    else:
+        print("Fetching data from Yahoo Finance")
+        fetcher = YahooFinanceDataFetcher()  # Use default ticker "^VIX"
+        data = fetcher.download_data(ticker=ticker, start=start_date, end=end_date)
 
+    if data is None or data.empty:
+        raise ValueError("Failed to fetch data or data is empty")
 
-def main():
-    # Fetch VIX data
-    #vix_data = YahooFinanceDataFetcher().download_data("^VIX", start="2024-01-01")
-    yfinance_data = YahooFinanceDataFetcher().download_data("^VIX")
-    empirical_stats = EmpiricalStatsDescriptive(yfinance_data)
-    # csv_loader = CSVDataLoader('VIX_History (1).csv')
-    # yfinance_data = csv_loader.load_data()
-    # empirical_stats = EmpiricalStatsDescriptive(yfinance_data)
+    print(f"Data type: {type(data)}")
+    print(f"Data columns: {data.columns}")
+    print(f"Close column type: {type(data['Close'])}")
+    print(f"Data head: \n{data.head()}")
+    print(f"Data tail: \n{data.tail()}")
 
-    # Get stats summary
-    stats = empirical_stats.stats_summary()
+    # Initialize analyzers
+    price_analyser = EmpiricalStatsDescriptive(data)
+    returns_analyser = price_analyser.analyse_returns(return_type='log')
 
-    # Basic Statistics
-    print("\n" + "=" * 50)
-    print("BASIC STATISTICS")
-    print("=" * 50)
-    basic_stats = {
-        "Row Count": stats["row_count"],
-        "Current": stats["current"],
-        "Mean": stats["mean"],
-        "Median": stats["median"],
-        "Mode": stats["mode"],
-        "Trimmed Mean": stats["trimmed_mean"],
-        "Min": stats["min"],
-        "Max": stats["max"],
-        "Range": stats["range"],
-        "Mid Range": stats["midrange"]
+    vix_ranges = [(0, 15), (15, 20), (20, 25), (25, 30), (30, 40), (40, float('inf'))]
+    vix_labels = ['Low', 'Moderate', 'Elevated', 'High', 'Very High', 'Extreme']
+    range_analyser = RangeAnalyser(data['Close'], vix_ranges, vix_labels)
+    range_analyser.plot_histogram()
+    range_analyser.plot_transition_matrix()
+    range_analyser.plot_durations()
+
+    extreme_analyser = ExtremeEventAnalyser(data['Close'], threshold=40)
+    volatility_analyser = VolatilityAnalyser(data['Close'], window=30)
+    bar_range_analyser = BarRange(data)
+    bar_range_analyser.plot_histogram()
+
+    kde_analyser = KDEAnalyser(data, column='Close')
+    kde_analyser.plot_kde_with_histogram()
+    kde_analyser.plot_boxplot_with_mean_iqr()
+
+    log_normal_analyser = LogNormalAnalyser(data, column='Close')
+    mean_reversion_analyser = MeanReversionAnalyser(data['Close'])
+    mean_reversion_analyser.plot_simulated_paths()
+
+    # Collect statistics
+    stats_dict = {
+        'price_stats': price_analyser.stats_summary(),
+        'returns_stats': returns_analyser.stats_summary(),
+        'range_analysis': range_analyser.range_summary(),
+        'extreme_analysis': extreme_analyser.extreme_summary(),
+        'volatility_analysis': volatility_analyser.volatility_summary(),
+        'bar_range_analysis': bar_range_analyser.get_bar_range_statistics(),
+        'kde_analysis': kde_analyser.analyze(),
+        'log_normal_analysis': log_normal_analyser.analyze(),
+        'mean_reversion_analysis': mean_reversion_analyser.summary()
     }
-    print_dict(basic_stats)
 
-    # Dispersion Statistics
-    print("\n" + "=" * 50)
-    print("DISPERSION STATISTICS")
-    print("=" * 50)
-    dispersion_stats = {
-        "Standard Deviation": stats["std_dev"],
-        "Variance": stats["variance"],
-        "Coefficient of Variation (Ratio)": stats["cv"],
-        "Coefficient of Variation (Percent)": stats["cv_percent"],
-        "Coefficient of Variation (Abs Percent)": stats["cv_abs_percent"],
-        "Standard Error of Mean": stats["sem"],
-        "Mean Absolute Deviation": stats["mad"],
-        "Raw Median Absolute Deviation": stats["raw_medad"],
-        "Normalized Median Absolute Deviation": stats["medad"]
-    }
-    print_dict(dispersion_stats)
+    if create_report:
+        generate_report(
+            ticker,
+            (end_date - start_date).days,
+            stats_dict['price_stats'],
+            stats_dict['returns_stats'],
+            stats_dict['range_analysis'],
+            stats_dict['extreme_analysis'],
+            stats_dict['volatility_analysis'],
+            stats_dict['bar_range_analysis'],
+            stats_dict['kde_analysis'],
+            stats_dict['log_normal_analysis'],
+            stats_dict['mean_reversion_analysis']
+        )
 
-    # Percentile Statistics
-    print("\n" + "=" * 50)
-    print("PERCENTILE STATISTICS")
-    print("=" * 50)
-    percentile_stats = {
-        "Current Percentile": stats["current_percentile"],
-        "Percentile 25": stats["percentile_25"],
-        "Percentile 50": stats["percentile_50"],
-        "Percentile 75": stats["percentile_75"],
-        "Percentile 90": stats["percentile_90"],
-        "Percentile 95": stats["percentile_95"],
-        "IQR": stats["iqr"]
-    }
-    print_dict(percentile_stats)
-
-    # Distributional Statistics
-    print("\n" + "=" * 50)
-    print("DISTRIBUTIONAL STATISTICS")
-    print("=" * 50)
-    distributional_stats = {
-        "Shannon Entropy (bits)": stats["entropy"],
-        "Z-Score": stats["z_score"],
-        "Geometric Mean": stats["geometric_mean"],
-        "Harmonic Mean": stats["harmonic_mean"],
-        "Skewness": stats["skewness"],
-        "Kurtosis": stats["kurtosis"],
-        "Hurst Exponent": stats["hurst"]
-    }
-    print_dict(distributional_stats)
-
-    # Time-Series Statistics
-    print("\n" + "=" * 50)
-    print("TIME-SERIES STATISTICS")
-    print("=" * 50)
-    time_series_stats = {
-        "Rolling 7 Day Mean": stats["rolling_mean_7"],
-        "Rolling 30 Day Mean": stats["rolling_mean_30"],
-        "30-Day Volatility": stats["volatility_30d"],
-        "Stability Score": stats["stability_score"],
-        "RSI": stats["rsi"],
-        "Time Weighted Means": {
-            "Linear": stats["time_weighted_mean"],
-            "Exponential": empirical_stats.get_time_weighted_means(empirical_stats.series)["exponential"],
-            "Quadratic": empirical_stats.get_time_weighted_means(empirical_stats.series)["quadratic"]
-        }
-    }
-    print_dict(time_series_stats)
-
-    # Returns Analysis (Log Returns)
-    print("\n" + "=" * 50)
-    print("LOG RETURNS ANALYSIS")
-    print("=" * 50)
-    returns_stats = empirical_stats.analyze_returns(return_type="log").stats_summary()
-    returns_summary = {
-        "Row Count": returns_stats["row_count"],
-        "Mean": returns_stats["mean"],
-        "Standard Deviation": returns_stats["std_dev"],
-        "Coefficient of Variation (Abs Percent)": returns_stats["cv_abs_percent"],
-        "Standard Error of Mean": returns_stats["sem"],
-        "Skewness": returns_stats["skewness"],
-        "Kurtosis": returns_stats["kurtosis"],
-        "Hurst Exponent": returns_stats["hurst"]
-    }
-    print_dict(returns_summary)
-
-    # Create LogNormalAnalyser for VIX data and print basic statistics
-    print("\n" + "=" * 50)
-    print("LOG-NORMAL ANALYSIS")
-    print("=" * 50)
-    vix_analyser = LogNormalAnalyser(yfinance_data, column="Close")
-    print(vix_analyser.get_statistics())
-    print(vix_analyser.get_extended_statistics())
-
-    kde_analyzer = KDEAnalyzer(yfinance_data, column="Close")
-    lognorm_analyzer = LogNormalAnalyser(yfinance_data, column="Close")
-
-    # KDE Analysis
-    print("\n" + "=" * 50)
-    print("KDE ANALYSIS")
-    print("=" * 50)
-    print(kde_analyzer.get_statistics())
-    print(kde_analyzer.get_extended_statistics())
-
-    kde_analyzer.plot_kde_with_histogram()
-    kde_analyzer.plot_boxplot_with_mean_iqr()
-
-    # Create both analyzers
-    mr_analyzer = MeanReversionAnalyser(yfinance_data["Close"].values, mean=kde_analyzer.data[kde_analyzer.column].mean())
-
-    # Get distribution insights from KDE
-    kde_stats = kde_analyzer.get_statistics()
-    kde_extended = kde_analyzer.get_extended_statistics()
-
-    # Get time-based insights from mean reversion
-    mr_params = mr_analyzer.estimate_ar_parameters()
-    mr_summary = mr_analyzer.summary()
-
-    # Cross-validate the results
-    expected_time_to_mean = mr_analyzer.estimate_time_to_mean()
-    return_periods = {
-        "30": kde_analyzer.estimate_expected_return_period(30),
-        "40": kde_analyzer.estimate_expected_return_period(40),
-        "mean": 1 / kde_analyzer.calculate_probability(mr_analyzer.mean * 0.99, mr_analyzer.mean * 1.01)
-    }
-
-    # Compare the approaches
-    print(f"\nKDE return period to mean: {return_periods['mean']:.2f} days")
-    print(f"Mean reversion time estimate: {expected_time_to_mean:.2f} days\n")
-
-    print("\n" + "=" * 50)
-    print("MEAN REVERSION ANALYSIS")
-    print("=" * 50)
-    print_dict(mr_analyzer.summary())
-    mr_analyzer.plot_simulated_paths()
-
-    # Range Analysis
-    print("\n" + "=" * 50)
-    print("RANGE ANALYSIS")
-    print("=" * 50)
-
-    # Define quantile-based ranges and labels
-    ranges = [(0, 13.85), (13.85, 22.83), (22.83, 33.20), (33.20, 100)]
-    labels = ["Low", "Moderate", "High", "Extreme"]
-
-    # Initialize RangeAnalyser
-    analyser = RangeAnalyser(yfinance_data["Close"], ranges, labels)
-
-    # Output results
-    analyser.histogram_output()
-    analyser.plot_histogram()
-    print("\nTransition Matrix:")
-    print(analyser.build_transition_matrix())
-    analyser.plot_transition_matrix()
-    print("\nAverage Durations:")
-    print(analyser.compute_average_durations())
-    analyser.plot_durations()
-    print("\nExtreme Events:")
-    print(analyser.track_extreme_events())
-
-    # Instantiate BarRange analyser
-    analyser = BarRange(yfinance_data)
-
-    # Get summary statistics (including ATR)
-    stats = analyser.summary_statistics()
-    print("\n")
-
-    # Print the statistics using the existing print_dict function
-    print("=" * 50)
-    print("BAR RANGE SUMMARY STATISTICS")
-    print("=" * 50)
-    print_dict(stats)
-
-    print("\n")
-
-    # Print Text-based Histogram
-    range_histogram_output = analyser.range_histogram_text(bins=100, cols=5)
-    print(range_histogram_output)
-
-    # Plot and save the histogram
-    analyser.plot_histogram(bins=100)
-
+    return stats_dict
 
 if __name__ == "__main__":
-    main()
+    stats_dict = main(create_report=True, csv_filepath=None)

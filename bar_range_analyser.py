@@ -1,12 +1,13 @@
+import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 class BarRange:
-    def __init__(self, data):
+    def __init__(self, data, bins=50):
         # Initialize with the data and calculate bar ranges (high - low)
         self.data = data
+        self.bins = bins
         self.data['Range'] = self.data['High'] - self.data['Low']
         self.data['ATR'] = self.calculate_atr()
 
@@ -34,57 +35,50 @@ class BarRange:
         }
         return stats
 
-    def range_histogram_text(self, bins=100, cols=5):
+    def compute_range_histogram(self):
         """
-        Return a formatted string of the range histogram in a multi-column text format,
-        including a summary of total counts and bins with zero counts.
-
-        Args:
-            bins (int): Number of bins for the histogram (default: 100).
-            cols (int): Number of bins to display per row (default: 5).
+        Compute the range histogram and return as a dictionary.
 
         Returns:
-            str: Formatted string containing the histogram and summary.
+            dict: Histogram data and summary statistics.
         """
         # Calculate histogram
-        range_hist, bin_edges = np.histogram(self.data['Range'], bins=bins)
+        range_hist, bin_edges = np.histogram(self.data['Range'], bins=self.bins)
         total_count = len(self.data['Range'])
 
-        # Build the output string
-        output = []
-        output.append("Daily Range Distribution (All Bins):")
-        output.append(f"{'Range (Count)':<20}" * cols)
-        output.append("-" * (20 * cols))
-
-        # Display bins in a multi-column format
-        for i in range(0, len(range_hist), cols):
-            row_bins = range_hist[i:i + cols]
-            row_edges = bin_edges[i:i + cols + 1]
-            row_strs = []
-            for j in range(len(row_bins)):
-                count = row_bins[j]
-                range_str = f"{row_edges[j]:.2f}-{row_edges[j + 1]:.2f}"
-                display_str = f"{range_str} ({count})"
-                row_strs.append(f"{display_str:<20}")
-            output.append("".join(row_strs))
+        # Build histogram data as a dictionary
+        histogram_data = {}
+        for i in range(len(range_hist)):
+            range_str = f"{bin_edges[i]:.2f}-{bin_edges[i + 1]:.2f}"
+            histogram_data[range_str] = range_hist[i]
 
         # Summary stats
         zero_bins = sum(1 for count in range_hist if count == 0)
-        output.append("")
-        output.append("Summary:")
-        output.append(f"Total Counts: {total_count}")
-        output.append(f"Bins with Zero Counts: {zero_bins} ({zero_bins / bins * 100:.2f}%)")
+        summary = {
+            "Total Counts": total_count,
+            "Bins with Zero Counts": f"{zero_bins} ({zero_bins / self.bins * 100:.2f}%)"
+        }
 
-        # Join all lines into a single string
-        return "\n".join(output)
+        return {
+            "Daily Range Distribution": histogram_data,
+            "Summary": summary
+        }
 
-    def plot_histogram(self, bins=10):
+    def get_bar_range_statistics(self):
+        """Return a dictionary of all bar range statistics."""
+        return {
+            "Summary Statistics": self.summary_statistics(),
+            "Range Histogram": self.compute_range_histogram()
+        }
+
+    def plot_histogram(self, bins=10, filename="Plot/bar_range_histogram.png"):
         """Plot a histogram of the daily bar ranges and save it."""
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
         plt.figure(figsize=(10, 6))
         plt.hist(self.data['Range'], bins=bins, color='skyblue', edgecolor='black')
         plt.title("Histogram of Daily Bar Ranges")
         plt.xlabel("Range")
         plt.ylabel("Frequency")
         plt.grid(True, alpha=0.3)
-        plt.savefig("bar_range_histogram.png")
+        plt.savefig(filename)
         plt.close()

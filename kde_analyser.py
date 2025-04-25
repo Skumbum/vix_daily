@@ -7,7 +7,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import KernelDensity
 
 
-class KDEAnalyzer:
+class KDEAnalyser:
     def __init__(self, data: pd.DataFrame, column: str = "Close", kernel: str = 'gaussian'):
         if column not in data.columns:
             raise ValueError(f"Column '{column}' not found in data")
@@ -105,7 +105,8 @@ class KDEAnalyzer:
 
         return numerator / denominator if denominator > 0 else float('inf')
 
-    def get_statistics(self):
+    def compute_statistics(self):
+        """Compute basic KDE statistics and return as a dictionary."""
         data_array = self.data[self.column].values
         mean = np.mean(data_array)
         median = np.median(data_array)
@@ -121,30 +122,29 @@ class KDEAnalyzer:
         q75 = np.percentile(data_array, 75)
         iqr = q75 - q25
 
-        stats_text = f"""
-    ==================================================
-    KDE STATISTICS for column: {self.column}
-    ==================================================
-    Count: {len(data_array)}
-    Mean: {mean:.4f}
-    Median: {median:.4f}
-    Mode: {mode:.4f}
-    Min: {min_val:.4f}
-    Max: {max_val:.4f}
-    Variance: {variance:.4f}
-    Skewness: {skewness:.4f}
-    Kurtosis: {kurtosis:.4f}
-    Interquartile Range (IQR): {iqr:.4f}
-     - 25th Percentile: {q25:.4f}
-     - 75th Percentile: {q75:.4f}
-    Kernel: {self.kernel}
-    Bandwidth: {self.bandwidth:.4f}
-    Z-Score (Current): {(self.current - mean) / np.std(data_array):.2f}
-    Current Value: {self.current:.2f}
-    """
-        return stats_text.strip()
+        return {
+            "Count": len(data_array),
+            "Mean": mean,
+            "Median": median,
+            "Mode": mode,
+            "Min": min_val,
+            "Max": max_val,
+            "Variance": variance,
+            "Skewness": skewness,
+            "Kurtosis": kurtosis,
+            "Interquartile Range (IQR)": {
+                "Value": iqr,
+                "25th Percentile": q25,
+                "75th Percentile": q75
+            },
+            "Kernel": self.kernel,
+            "Bandwidth": self.bandwidth,
+            "Z-Score (Current)": (self.current - mean) / np.std(data_array),
+            "Current Value": self.current
+        }
 
-    def get_extended_statistics(self):
+    def compute_extended_statistics(self):
+        """Compute extended KDE statistics and return as a dictionary."""
         current_value = self.current
         current_percentile = self.calculate_percentile(current_value)
 
@@ -166,38 +166,40 @@ class KDEAnalyzer:
         q95 = np.percentile(data_array, 95)
         q99 = np.percentile(data_array, 99)
 
-        stats_text = f"""
-==================================================
-EXTENDED KDE STATISTICS
-==================================================
-Current Value: {current_value:.2f}
-Current Percentile: {current_percentile:.2f}%
+        return {
+            "Current Value": current_value,
+            "Current Percentile": f"{current_percentile:.2f}%",
+            "Probability Intervals": {
+                "Below 15": f"{prob_below_15:.2f}%",
+                "Between 15-20": f"{prob_15_to_20:.2f}%",
+                "Between 20-30": f"{prob_20_to_30:.2f}%",
+                "Above 30": f"{prob_above_30:.2f}%"
+            },
+            "Return Periods (Days)": {
+                "Exceeding 30": return_period_30,
+                "Exceeding 40": return_period_40,
+                "Exceeding 50": return_period_50
+            },
+            "Expected Values": {
+                "E[Data | Data > 30]": expected_above_30,
+                "E[Data | Data > 40]": expected_above_40
+            },
+            "Key Quantiles": {
+                "1%": q1,
+                "5%": q5,
+                "95%": q95,
+                "99%": q99
+            }
+        }
 
-Probability Intervals:
-- Below 15: {prob_below_15:.2f}%
-- Between 15-20: {prob_15_to_20:.2f}%
-- Between 20-30: {prob_20_to_30:.2f}%
-- Above 30: {prob_above_30:.2f}%
-
-Return Periods (Days):
-- Exceeding 30: {return_period_30:.2f}
-- Exceeding 40: {return_period_40:.2f}
-- Exceeding 50: {return_period_50:.2f}
-
-Expected Values:
-- E[Data | Data > 30]: {expected_above_30:.2f}
-- E[Data | Data > 40]: {expected_above_40:.2f}
-
-Key Quantiles:
-- 1%: {q1:.2f}
-- 5%: {q5:.2f}
-- 95%: {q95:.2f}
-- 99%: {q99:.2f}
-"""
-        return stats_text.strip()
+    def analyze(self):
+        """Return a dictionary of KDE analysis results for main.py to process."""
+        return {
+            f"KDE STATISTICS for column: {self.column}": self.compute_statistics(),
+            "EXTENDED KDE STATISTICS": self.compute_extended_statistics()
+        }
 
     def plot_kde_with_histogram(self, bins=30, filename="Plot/kde_plot.png"):
-
         # Create subdirectory if it doesn't exist
         os.makedirs(os.path.dirname(filename), exist_ok=True)
 
@@ -235,7 +237,6 @@ Key Quantiles:
         plt.close()
 
     def plot_boxplot_with_mean_iqr(self, filename="Plot/boxplot_with_mean_iqr.png"):
-
         # Create subdirectory if it doesn't exist
         os.makedirs(os.path.dirname(filename), exist_ok=True)
 
@@ -265,5 +266,3 @@ Key Quantiles:
         # Save the plot
         plt.savefig(filename)
         plt.close()
-
-

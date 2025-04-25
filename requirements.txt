@@ -6,3 +6,4 @@ matplotlib~=3.10.1
 scikit-learn~=1.6.1
 seaborn~=0.13.2
 statsmodels~=0.14.4
+prompt_toolkit~=3.0.51

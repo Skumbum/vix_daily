@@ -19,8 +19,8 @@ class LogNormalAnalyser:
         self.shape = self.sigma
         self.scale = np.exp(self.mu)
 
-    def get_statistics(self):
-        """Return log-normal fit statistics as text."""
+    def compute_basic_stats(self):
+        """Return log-normal fit statistics as a dictionary."""
         mean = stats.lognorm.mean(self.shape, scale=self.scale)
         median = stats.lognorm.median(self.shape, scale=self.scale)
         mode = np.exp(self.mu - self.sigma ** 2)
@@ -28,25 +28,18 @@ class LogNormalAnalyser:
         skewness = stats.lognorm.stats(self.shape, scale=self.scale, moments='s')
         kurtosis = stats.lognorm.stats(self.shape, scale=self.scale, moments='k')
 
-        stats_text = f"""
-==================================================
-LOG-NORMAL STATISTICS for column: {self.column}
-==================================================
-Log-Mean (μ): {self.mu:.4f}
-Log-Std Dev (σ): {self.sigma:.4f}
-Shape (σ): {self.shape:.4f}
-Scale (e^μ): {self.scale:.4f}
-
-Mean: {mean:.4f}
-Median: {median:.4f}
-Mode: {mode:.4f}
-Variance: {variance:.4f}
-Skewness: {skewness:.4f}
-Kurtosis: {kurtosis:.4f}
-"""
-        return stats_text.strip()
-
-
+        return {
+            "Log-Mean (μ)": self.mu,
+            "Log-Std Dev (σ)": self.sigma,
+            "Shape (σ)": self.shape,
+            "Scale (e^μ)": self.scale,
+            "Mean": mean,
+            "Median": median,
+            "Mode": mode,
+            "Variance": variance,
+            "Skewness": skewness,
+            "Kurtosis": kurtosis
+        }
 
     def get_probability_interval(self, lower_bound, upper_bound):
         """Calculate probability that value falls within [lower_bound, upper_bound]"""
@@ -166,8 +159,8 @@ Kurtosis: {kurtosis:.4f}
         # For a log-normal, this is related to the variance of log returns
         return np.sqrt(np.exp(self.sigma ** 2) - 1)
 
-    def get_extended_statistics(self):
-        """Get extended log-normal statistics"""
+    def compute_extended_stats(self):
+        """Get extended log-normal statistics as a dictionary"""
         current_value = self.data[self.column].iloc[-1]
 
         # Calculate percentile of current value
@@ -200,51 +193,49 @@ Kurtosis: {kurtosis:.4f}
         q99 = self.get_quantile(0.99)
 
         # Calculate half-life if current value is above median
+        half_life = None
         if current_value > self.scale:
             half_life = self.get_half_life(current_value)
-        else:
-            half_life = None
+            half_life = f"{half_life:.2f} days" if half_life != float('inf') else "Infinite"
 
         # Calculate volatility of volatility
         vol_of_vol = self.get_volatility_of_volatility()
 
-        stats_text = f"""
-==================================================
-EXTENDED LOG-NORMAL STATISTICS
-==================================================
-Current Value: {current_value:.2f}
-Current Percentile: {current_percentile:.2f}%
+        return {
+            "Current Value": current_value,
+            "Current Percentile": f"{current_percentile:.2f}%",
+            "Probability Intervals": {
+                "Below 10": f"{prob_below_10:.2f}%",
+                "Between 10-20": f"{prob_10_to_20:.2f}%",
+                "Between 20-30": f"{prob_20_to_30:.2f}%",
+                "Above 30": f"{prob_above_30:.2f}%"
+            },
+            "Return Periods (Days)": {
+                "Exceeding 30": return_period_30,
+                "Exceeding 40": return_period_40,
+                "Exceeding 50": return_period_50
+            },
+            "Expected Values": {
+                "E[X | X > 30]": expected_above_30,
+                "E[X | X > 40]": expected_above_40
+            },
+            "95% Confidence Interval": {
+                "Lower": lower_ci,
+                "Upper": upper_ci
+            },
+            "Key Quantiles": {
+                "1%": q1,
+                "5%": q5,
+                "95%": q95,
+                "99%": q99
+            },
+            "Volatility of Volatility": vol_of_vol,
+            "Estimated Half-Life to Median": half_life
+        }
 
-Probability Intervals:
-- Below 10: {prob_below_10:.2f}%
-- Between 10-20: {prob_10_to_20:.2f}%
-- Between 20-30: {prob_20_to_30:.2f}%
-- Above 30: {prob_above_30:.2f}%
-
-Return Periods (Days):
-- Exceeding 30: {return_period_30:.2f}
-- Exceeding 40: {return_period_40:.2f}
-- Exceeding 50: {return_period_50:.2f}
-
-Expected Values:
-- E[X | X > 30]: {expected_above_30:.2f}
-- E[X | X > 40]: {expected_above_40:.2f}
-
-95% Confidence Interval:
-- Lower: {lower_ci:.2f}
-- Upper: {upper_ci:.2f}
-
-Key Quantiles:
-- 1%: {q1:.2f}
-- 5%: {q5:.2f}
-- 95%: {q95:.2f}
-- 99%: {q99:.2f}
-
-Volatility of Volatility: {vol_of_vol:.4f}
-"""
-        if half_life is not None:
-            stats_text += f"Estimated Half-Life to Median: {half_life:.2f} days\n"
-
-
-
-        return stats_text.strip()
+    def analyze(self):
+        """Return a dictionary of log-normal analysis results for main.py to print."""
+        return {
+            f"LOG-NORMAL STATISTICS for column: {self.column}": self.compute_basic_stats(),
+            "EXTENDED LOG-NORMAL STATISTICS": self.compute_extended_stats()
+        }
